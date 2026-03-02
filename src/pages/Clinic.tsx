@@ -28,6 +28,15 @@ const newsData = [
   }
 ];
 
+const doctorArticles = [
+  { id: 'a1', title: '太阳光对睡眠的影响——你不知道的褪黑素秘密', excerpt: '光照是调节人体生物钟的关键因素。研究表明，清晨的阳光能够有效抑制褪黑素的分泌，帮助我们快速清醒；而夜间的强光则会……' },
+  { id: 'a2', title: '乙酰胆碱与快速眼动期的关系', excerpt: '在REM（快速眼动）睡眠阶段，大脑中的乙酰胆碱水平会显著升高。这种神经递质不仅参与梦境的生成，还与记忆的巩固密切相关……' },
+  { id: 'a3', title: '当救护车声惊醒你的深眠——城市噪音与睡眠质量', excerpt: '突发性的高分贝噪音不仅会打断睡眠周期，还会引发交感神经的应激反应。长期处于这种环境中，极易导致慢性失眠和焦虑……' },
+  { id: 'a4', title: '苦于失眠？五个呼吸练习帮你入睡', excerpt: '通过调节呼吸频率，我们可以有效降低交感神经的活跃度。今天我将教大家一套“4-7-8”呼吸法，帮助你在十分钟内进入放松状态……' },
+  { id: 'a5', title: '褪黑素不是安眠药——访我院钟长明博士', excerpt: '钟博士在接受采访时指出，滥用褪黑素可能会导致内分泌紊乱。他强调：“真正的安宁，来自于精神与肉体的和谐，而非化学物质的强制剥离。”' },
+  { id: 'a6', title: '写在离职前——感谢安宁诊所的栽培', excerpt: '在这里实习的半年让我学到了很多。虽然有些“前沿”的治疗理念我至今无法完全理解，甚至感到一丝敬畏，但仍感谢这段经历' }
+];
+
 export function Clinic() {
   const { addClue, addFragment } = useGame();
   const [activeTab, setActiveTab] = useState<'home' | 'news' | 'doctors' | 'appointment'>('home');
@@ -259,8 +268,53 @@ export function Clinic() {
         )}
 
         {activeTab === 'doctors' && (
-          <div className="animate-in fade-in text-center text-[#999999] py-20">
-            专家团队页面内容加载中...
+          <div className="animate-in fade-in max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-[#003d82] mb-6 border-b pb-4">专家专栏 - 林医生</h2>
+            <div className="bg-blue-50 border border-blue-200 p-4 mb-8 text-sm text-[#666666]">
+              <p><strong>林医生简介：</strong> 我院前神经共振科实习医生，擅长通过生活方式干预改善睡眠质量。她曾在此开设专栏，分享了许多实用的睡眠科普知识。</p>
+            </div>
+            
+            <div className="space-y-6">
+              {doctorArticles.map((article, index) => (
+                <div key={article.id} className="bg-white p-6 shadow-sm border border-[#e0e0e0] hover:shadow-md transition-shadow">
+                  <h3 className="text-xl font-bold text-[#333333] mb-3">
+                    {/* Highlight the first letter slightly to hint the player */}
+                    <span className="text-[#0056b3] font-serif pr-[1px]">{article.title.charAt(0)}</span>
+                    {article.title.slice(1)}
+                  </h3>
+                  <p className="text-[#666666] leading-relaxed">
+                    {article.excerpt}
+                    {/* Fragment 6 hidden in the period of the last article */}
+                    {index === 5 && (
+                      <span 
+                        className="cursor-pointer hover:text-amber-600 font-bold transition-colors"
+                        onClick={() => {
+                          addFragment(6);
+                          alert('你在离职信的句号里发现了一枚古铜色的符文碎片。');
+                        }}
+                      >
+                        。
+                      </span>
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center">
+              <button 
+                onClick={() => {
+                  addClue({
+                    id: 'taiyi',
+                    title: '专栏文章的藏头诗',
+                    description: '林医生前四篇文章标题的首字连起来是：太、乙、救、苦。这似乎是某种暗号。'
+                  });
+                }}
+                className="text-xs text-[#999999] hover:text-[#0056b3] underline"
+              >
+                [整理文章标题]
+              </button>
+            </div>
           </div>
         )}
 

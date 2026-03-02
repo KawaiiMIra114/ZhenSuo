@@ -1,4 +1,5 @@
 export type AppState = 'warning' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending';
+export type EndingType = 'A' | 'B' | 'C' | null;
 
 export interface Clue {
   id: string;
@@ -16,4 +17,6 @@ export interface GameContextType {
   hasClue: (id: string) => boolean;
   hasUnread: boolean;
   markAsRead: () => void;
+  endingType: EndingType;
+  setEndingType: (type: EndingType) => void;
 }

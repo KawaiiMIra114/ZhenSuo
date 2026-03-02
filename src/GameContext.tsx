@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { GameContextType, AppState, Clue } from './types';
+import { GameContextType, AppState, Clue, EndingType } from './types';
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
@@ -8,6 +8,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [clues, setClues] = useState<Clue[]>([]);
   const [fragments, setFragments] = useState<number[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [endingType, setEndingType] = useState<EndingType>(null);
 
   const addClue = (clue: Clue) => {
     setClues(prev => {
@@ -29,7 +30,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const markAsRead = () => setHasUnread(false);
 
   return (
-    <GameContext.Provider value={{ currentApp, setCurrentApp, clues, addClue, fragments, addFragment, hasClue, hasUnread, markAsRead }}>
+    <GameContext.Provider value={{ currentApp, setCurrentApp, clues, addClue, fragments, addFragment, hasClue, hasUnread, markAsRead, endingType, setEndingType }}>
       {children}
     </GameContext.Provider>
   );

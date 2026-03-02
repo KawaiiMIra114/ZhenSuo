@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "Noto Serif SC", "SimSun", serif;
+  --font-mono: "Courier Prime", "Courier New", monospace;
+}
+
+body {
+  @apply bg-[#f4f7f6] text-[#333333] font-sans antialiased selection:bg-[#a8c6fa] selection:text-black;
+}
+
+/* 3D Transforms for Flip Card */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Animations */
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal {
+  animation: modal-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Old-school link style */
+.clinic-link {
+  @apply text-[#0056b3] hover:text-[#003d82] hover:underline cursor-pointer transition-colors duration-200;
+}
+
+/* CRT Scanline Effect for OA System */
+.crt-overlay {
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Basic table style */
+.clinic-table {
+  @apply w-full border-collapse border border-[#cccccc] bg-white text-sm;
+}
+.clinic-table th {
+  @apply border border-[#cccccc] bg-[#e9ecef] px-4 py-2 text-left font-bold text-[#495057];
+}
+.clinic-table td {
+  @apply border border-[#cccccc] px-4 py-2 text-[#212529];
+}
+
+/* Terminal style for hidden pages */
+.terminal-mode {
+  @apply bg-black text-[#00ff00] font-mono;
+}
+.terminal-mode ::selection {
+  @apply bg-[#00ff00] text-black;
+}
+.terminal-mode input {
+  @apply bg-black text-[#00ff00] border border-[#00ff00] focus:outline-none focus:ring-1 focus:ring-[#00ff00] placeholder:text-[#005500];
+}
+.terminal-mode button {
+  @apply bg-black text-[#00ff00] border border-[#00ff00] hover:bg-[#00ff00] hover:text-black transition-colors;
+}
+
+/* Glitch effect for terminal */
+@keyframes terminal-glitch {
+  0% { text-shadow: 1px 0 0 red, -1px 0 0 blue; }
+  5% { text-shadow: -1px 0 0 red, 1px 0 0 blue; }
+  10% { text-shadow: 0 0 0 transparent; }
+  100% { text-shadow: 0 0 0 transparent; }
+}
+.terminal-glitch {
+  animation: terminal-glitch 3s infinite;
+}

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../GameContext';
 
 export function Ending() {
   const { endingType } = useGame();
+  const [displayedText, setDisplayedText] = useState('');
+  const [isFinished, setIsFinished] = useState(false);
 
   const content = {
     A: {
@@ -30,21 +32,60 @@ export function Ending() {
 
   const current = endingType ? content[endingType] : null;
 
+  useEffect(() => {
+    if (!current) return;
+
+    let currentIndex = 0;
+    let currentText = '';
+    let timeoutId: NodeJS.Timeout;
+
+    const typeNextChar = () => {
+      if (currentIndex < current.text.length) {
+        const char = current.text[currentIndex];
+        currentText += char;
+        setDisplayedText(currentText);
+        currentIndex++;
+
+        // 根据标点符号调整打字速度，模拟语气停顿
+        let delay = 40; // 基础速度
+        if (['，', ','].includes(char)) delay = 250;
+        else if (['。', '！', '？', '!', '?'].includes(char)) delay = 600;
+        else if (['…', '—'].includes(char)) delay = 300;
+        else if (char === '\n') delay = 400;
+
+        timeoutId = setTimeout(typeNextChar, delay);
+      } else {
+        setIsFinished(true);
+      }
+    };
+
+    // 初始延迟，让玩家先看到标题
+    timeoutId = setTimeout(typeNextChar, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [current]);
+
   if (!current) return null;
 
   return (
     <div className={`fixed inset-0 ${current.bg} z-[9999] flex flex-col items-center justify-center p-8 font-serif`}>
-      <div className="max-w-2xl w-full animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        <h1 className={`text-4xl font-bold mb-8 ${current.color} tracking-widest`}>{current.title}</h1>
-        <div className={`text-lg leading-loose ${current.color} opacity-80 whitespace-pre-wrap`}>
-          {current.text}
+      <div className="max-w-2xl w-full">
+        <h1 className={`text-4xl font-bold mb-8 ${current.color} tracking-widest animate-in fade-in duration-1000`}>
+          {current.title}
+        </h1>
+        <div className={`text-lg leading-loose ${current.color} opacity-80 whitespace-pre-wrap min-h-[400px]`}>
+          {displayedText}
+          {!isFinished && <span className="animate-pulse ml-1">_</span>}
         </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className={`mt-16 px-6 py-3 border ${current.border} ${current.color} hover:bg-white/10 transition-colors tracking-widest font-mono`}
-        >
-          重启系统 (RESTART)
-        </button>
+        
+        {isFinished && (
+          <button 
+            onClick={() => window.location.reload()}
+            className={`mt-8 px-6 py-3 border ${current.border} ${current.color} hover:bg-white/10 transition-colors tracking-widest font-mono animate-in fade-in duration-1000`}
+          >
+            重启系统 (RESTART)
+          </button>
+        )}
       </div>
     </div>
   );

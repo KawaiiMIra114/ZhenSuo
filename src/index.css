@@ -224,3 +224,135 @@ body {
     transform: scale(1);
   }
 }
+
+/* ===== V3 InvestigateNode ===== */
+.investigate-node {
+  transition: all 0.2s ease;
+}
+
+.investigate-highlight {
+  border-bottom: 1px dashed rgba(255, 100, 100, 0.4);
+}
+
+.investigate-highlight:hover {
+  background: rgba(255, 100, 100, 0.08);
+  border-bottom-color: rgba(255, 100, 100, 0.7);
+}
+
+.investigate-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 30, 0.95);
+  color: #e0e0e0;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(100, 100, 255, 0.2);
+  white-space: nowrap;
+  max-width: 320px;
+  white-space: normal;
+  z-index: 1000;
+  animation: fade-in-up 0.3s ease-out;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.investigate-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(20, 20, 30, 0.95);
+}
+
+/* 符文碎片收集闪烁 */
+.rune-flash {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #8B6914, #CD853F, #8B6914);
+  color: #1a0a00;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  border: 2px solid #CD853F;
+  z-index: 10000;
+  animation: rune-appear 1.5s ease-out forwards;
+  box-shadow: 0 0 30px rgba(205, 133, 63, 0.5);
+  font-family: 'Noto Serif SC', serif;
+}
+
+@keyframes rune-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.05);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.95);
+  }
+}
+
+/* ===== LinXiao 字体异构效果 ===== */
+@keyframes linxiao-glitch {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+
+  5% {
+    transform: skewX(-2deg);
+    filter: hue-rotate(90deg);
+  }
+
+  10% {
+    transform: none;
+    opacity: 0.8;
+  }
+
+  15% {
+    transform: skewX(1deg) translateX(2px);
+  }
+
+  20% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
+
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.linxiao-glitch {
+  animation: linxiao-glitch 0.3s ease-out;
+}
+
+/* ===== DraggableWindow ===== */
+.draggable-window {
+  backdrop-filter: blur(8px);
+  transition: box-shadow 0.2s ease;
+}
+
+.draggable-window:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}

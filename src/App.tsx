@@ -11,17 +11,19 @@ import { Ending } from './pages/Ending';
 import { Notebook } from './components/Notebook';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Browser } from './components/Browser';
+import { ShutdownSequence } from './components/ShutdownSequence';
 
 function GameRouter() {
   const { currentApp } = useGame();
 
   if (currentApp === 'warning') return <Warning />;
   if (currentApp === 'prologue') return <Prologue />;
+  if (currentApp === 'shutdown') return <ShutdownSequence />;
   if (currentApp === 'terminal') return <Terminal />;
   if (currentApp === 'ending') return <Ending />;
   if (currentApp === 'desktop') return <><Desktop /><Notebook /></>;
 
-  // Browser Apps
+  // Browser Apps — 白区/灰区/黑区
   let url = 'https://www.tranquil-sleep.com';
   let title = '安宁深眠诊所';
   let content = <Clinic />;

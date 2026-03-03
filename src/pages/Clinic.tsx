@@ -1,429 +1,486 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useGame } from '../GameContext';
-import { Search, ChevronRight } from 'lucide-react';
+import { InvestigateNode } from '../components/InvestigateNode';
+import { Search, ChevronRight, Phone, MapPin, Clock, Award, FileText, Users } from 'lucide-react';
 
-// 模拟新闻数据
-const newsData = [
-  {
-    id: 'n1',
-    date: '2024-03-14',
-    title: '关于我院林某某患者突发癔症的声明',
-    content: '近日，有网络传言称我院发生医疗事故。经核实，系患者林某某（女，24岁）因自身基础性精神疾病突发癔症。患者声称机房有鬼，并试图破坏医疗设备，这是严重的幻觉。我院已联系家属，由前台值班经理（工号8023）进行后续安抚，并已协助办理转院手续。请广大市民不信谣、不传谣。',
-    keywords: ['3月14日', '林晓', '事故', '声明']
-  },
-  {
-    id: 'n2',
-    date: '2024-05-20',
-    title: '我院IT工程师赵启光荣离职——感谢六年辛勤付出',
-    content: '今天，我们怀着不舍的心情欢送我院资深IT工程师赵启。赵启同志在职期间，负责地下机房及全院网络的日常维护，工作兢兢业业。因个人发展原因，赵启同志正式离职。祝愿他在未来的道路上一帆风顺！',
-    image: 'zhaoqi', // 标记需要渲染图片的特殊新闻
-    keywords: ['机房', '赵启', 'IT', '离职']
-  },
-  {
-    id: 'n3',
-    date: '2024-06-01',
-    title: '关于近期加强信息安全管理的通知',
-    content: '为进一步提升医院信息化管理水平，防范数据泄露风险。即日起，所有内部系统登录密码将进行重置。为方便记忆，临时登录密码统一采用员工个人口令的拼音首字母缩写。请各位同事妥善保管，切勿外传。',
-    keywords: ['密码', '安全', '通知', '管理']
-  }
-];
+// ═══════════════════════════════════════════
+//  Clinic · V3 白区 · 安宁深眠诊所官网
+//  A-1~A-3 新闻 + D-1~D-4 专栏 + 档案查询 + LOGO碎片
+// ═══════════════════════════════════════════
 
-const doctorArticles = [
-  { id: 'a1', title: '太阳光对睡眠的影响——你不知道的褪黑素秘密', excerpt: '光照是调节人体生物钟的关键因素。研究表明，清晨的阳光能够有效抑制褪黑素的分泌，帮助我们快速清醒；而夜间的强光则会……' },
-  { id: 'a2', title: '乙酰胆碱与快速眼动期的关系', excerpt: '在REM（快速眼动）睡眠阶段，大脑中的乙酰胆碱水平会显著升高。这种神经递质不仅参与梦境的生成，还与记忆的巩固密切相关……' },
-  { id: 'a3', title: '当救护车声惊醒你的深眠——城市噪音与睡眠质量', excerpt: '突发性的高分贝噪音不仅会打断睡眠周期，还会引发交感神经的应激反应。长期处于这种环境中，极易导致慢性失眠和焦虑……' },
-  { id: 'a4', title: '苦于失眠？五个呼吸练习帮你入睡', excerpt: '通过调节呼吸频率，我们可以有效降低交感神经的活跃度。今天我将教大家一套“4-7-8”呼吸法，帮助你在十分钟内进入放松状态……' },
-  { id: 'a5', title: '褪黑素不是安眠药——访我院钟长明博士', excerpt: '钟博士在接受采访时指出，滥用褪黑素可能会导致内分泌紊乱。他强调：“真正的安宁，来自于精神与肉体的和谐，而非化学物质的强制剥离。”' },
-  { id: 'a6', title: '写在离职前——感谢安宁诊所的栽培', excerpt: '在这里实习的半年让我学到了很多。虽然有些“前沿”的治疗理念我至今无法完全理解，甚至感到一丝敬畏，但仍感谢这段经历' }
-];
+type Tab = 'home' | 'news' | 'column' | 'archive' | 'about';
+
+// 新闻数据 (V3 §A-1 ~ A-3)
+interface NewsItem {
+  id: string;
+  title: string;
+  date: string;
+  tag: string;
+  summary: string;
+  content: React.ReactNode;
+}
+
+// 专栏数据 (V3 §D-1 ~ D-4)
+interface ColumnItem {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  summary: string;
+  content: React.ReactNode;
+}
 
 export function Clinic() {
-  const { addClue, addFragment } = useGame();
-  const [activeTab, setActiveTab] = useState<'home' | 'news' | 'doctors' | 'appointment'>('home');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof newsData>([]);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [appointmentQuery, setAppointmentQuery] = useState('');
-  const [appointmentResult, setAppointmentResult] = useState('');
-  const [showImageModal, setShowImageModal] = useState(false);
+  const { readHook, hasReadHook, collectRune, hasRune, linXiaoSignalStrength } = useGame();
+  const [activeTab, setActiveTab] = useState<Tab>('home');
+  const [selectedNews, setSelectedNews] = useState<string | null>(null);
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [archiveResult, setArchiveResult] = useState<string | null>(null);
 
-  const handleNewsSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return;
+  // LOGO 长凝视计时 (RUNE_06)
+  const [logoHoverTime, setLogoHoverTime] = useState(0);
+  const logoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [logoTriggered, setLogoTriggered] = useState(false);
 
-    const results = newsData.filter(news =>
-      news.title.includes(q) ||
-      news.content.includes(q) ||
-      news.keywords.some(k => k.includes(q))
-    );
-
-    setSearchResults(results);
-    setHasSearched(true);
-
-    // 触发线索收集逻辑
-    if (results.some(r => r.id === 'n1')) {
-      addClue({
-        id: 'server-room',
-        title: '新闻声明中的异常',
-        description: '3月14日的声明提到林晓声称“机房有鬼”。后续安抚由前台值班经理（工号8023）负责。'
+  const handleLogoEnter = () => {
+    if (hasRune('RUNE_06')) return;
+    logoTimerRef.current = setInterval(() => {
+      setLogoHoverTime(prev => {
+        if (prev >= 8) {
+          // 8秒触发
+          collectRune('RUNE_06');
+          setLogoTriggered(true);
+          setTimeout(() => setLogoTriggered(false), 2000);
+          if (logoTimerRef.current) clearInterval(logoTimerRef.current);
+          return 0;
+        }
+        return prev + 1;
       });
-    }
-    if (results.some(r => r.id === 'n3')) {
-      addClue({
-        id: 'password-rule',
-        title: '内部密码规则',
-        description: '临时登录密码统一采用员工个人口令的拼音首字母缩写。'
-      });
-    }
+    }, 1000);
   };
 
-  const handleAppointmentSearch = (e: React.FormEvent) => {
+  const handleLogoLeave = () => {
+    if (logoTimerRef.current) clearInterval(logoTimerRef.current);
+    setLogoHoverTime(0);
+  };
+
+  // 档案查询处理
+  const handleArchiveSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (appointmentQuery.trim().toUpperCase() === 'LX-044-YIN') {
-      setAppointmentResult('该档案已作为【特殊医疗废弃物】处理，详情请见3月14日新闻公告。');
-      addClue({
-        id: 'march-14',
-        title: '被销毁的档案',
-        description: '挂号条码 LX-044-YIN 显示档案已被作为“特殊医疗废弃物”处理，提示查看3月14日新闻公告。'
-      });
+    const q = archiveQuery.trim().toUpperCase();
+    if (q === 'LX-044-YIN') {
+      setArchiveResult('redirect');
+      readHook('archive_lx044');
+    } else if (q.length > 0) {
+      setArchiveResult('404');
     } else {
-      setAppointmentResult('未查询到相关就诊记录，请核对条码。');
+      setArchiveResult(null);
     }
   };
 
-  const handleZhaoQiImageClick = () => {
-    setShowImageModal(true);
-    addClue({
-      id: 'zhao-qi-oa',
-      title: '照片里的网址',
-      description: '赵启离职新闻的照片中，电脑屏幕上隐约显示着内部OA系统的地址：oa.tranquil-sleep.com/login'
-    });
-  };
+  // ── 新闻数据 ──
+  const newsItems: NewsItem[] = [
+    {
+      id: 'news_transfer',
+      title: '关于2024年3月14日患者批量转院的情况说明',
+      date: '2024-03-14',
+      tag: '公告',
+      summary: '因设备升级维护需要，部分在院患者将按计划有序转至合作医疗机构……',
+      content: (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-700">
+          <p className="text-xs text-gray-500">发布单位：安宁深眠诊所 行政管理部</p>
+          <p className="text-xs text-gray-500">文件编号：AQSM-2024-ADM-031401</p>
+          <hr />
+          <p>尊敬的各位患者家属及社会各界：</p>
+          <p>因我诊所核心睡眠监测设备（型号：Morpheus-III 全景脑电拓扑仪）进入定期维护周期，经诊所管理层研究决定，自2024年3月14日起，将对在院深度睡眠疗程患者进行有序批量转院安置。</p>
+          <p>本次转院涉及<strong>长期住院疗程患者共计 47 名</strong>，均已按照既定程序完成家属知情同意签署。转往的合作机构分别为：</p>
+          <ul className="list-disc ml-6 space-y-1">
+            <li>南郊市第三人民医院 睡眠医学中心（32名）</li>
+            <li>省立精神卫生中心 特殊病房区（15名）</li>
+          </ul>
+          <p>请各位家属携带有效身份证件及既往开具的《知情同意授权书》副本，前往对应接收机构办理交接手续。</p>
+          <p>如有疑问，请联系我诊所前台服务热线：</p>
+          <p>
+            <InvestigateNode hookId="news_8023" feedbackText="8023……这个工号好像很重要。">
+              <span className="font-mono">前台值班工号：<strong className="text-blue-700">8023</strong></span>
+            </InvestigateNode>
+          </p>
+          <p className="text-xs text-gray-400 mt-6">安宁深眠诊所 行政管理部</p>
+          <p className="text-xs text-gray-400">2024年3月14日</p>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+            <InvestigateNode hookId="news_c3_link" runeId="RUNE_02" feedbackText="附件C3……这里面有什么？">
+              📎 附件C3：《设备维护技术参数与服务协议》<span className="text-blue-500 underline cursor-pointer">（点击下载）</span>
+            </InvestigateNode>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'news_zhaoqi',
+      title: '感谢信 — 致外包运维工程师赵启同志',
+      date: '2024-03-13',
+      tag: '员工风采',
+      summary: '赵启同志在我诊所信息化建设中兢兢业业，因个人原因离职……',
+      content: (
+        <div className="space-y-4 text-sm leading-relaxed text-gray-700">
+          <p>赵启同志（工号：IT-EXT-0077）于2023年6月入职我诊所信息技术外包运维岗位，服务期间兢兢业业，为诊所信息化建设做出了重要贡献。</p>
+          <p>因个人职业发展规划调整，赵启同志已于<strong>2024年3月13日</strong>正式办理离职手续。</p>
+          <div className="bg-gray-100 rounded-lg p-4 my-4">
+            <InvestigateNode hookId="news_oa_url" feedbackText="照片背景的电脑屏幕上……似乎有一个网址。oa.tranquil-sleep.com">
+              <img src="/images/zhaoqi_departure.png" alt="赵启离职照" className="w-full rounded" />
+              <p className="text-xs text-gray-500 mt-2 text-center">▲ 赵启同志在办理离职手续（人事部门留影）</p>
+            </InvestigateNode>
+          </div>
+          <p>在此，诊所管理层及全体同事向赵启同志致以诚挚的感谢，并祝愿其未来的职业道路一帆风顺。</p>
+          <p className="text-xs text-gray-400">——安宁深眠诊所 人力资源部</p>
+        </div>
+      ),
+    },
+    {
+      id: 'news_security',
+      title: '信息安全管理规范 (修订版)',
+      date: '2024-02-01',
+      tag: '制度',
+      summary: '为加强诊所信息系统安全管理，现修订发布《信息安全管理规范》……',
+      content: (
+        <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+          <p className="font-bold text-gray-800">安宁深眠诊所 信息安全管理规范（2024修订版）</p>
+          <p className="text-xs text-gray-500">文件编号：AQSM-IT-SEC-2024-001 | 密级：内部</p>
+          <hr />
+          <p className="text-xs text-gray-600 leading-relaxed">
+            ……（前13条省略）
+          </p>
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <InvestigateNode hookId="news_password_rule" feedbackText="第14条……口令生成规则：拼音首字母。这也许能用来推断某个密码。">
+              <p className="text-sm text-gray-800">
+                <strong>第十四条</strong>　内部系统登录口令应采用<strong>指定口令短语的汉语拼音首字母缩写</strong>作为密码，口令短语由部门主管指定并通过安全渠道分发。工号即为登录用户名。
+              </p>
+            </InvestigateNode>
+          </div>
+          <p className="text-xs text-gray-600 leading-relaxed">
+            ……（后续条款省略）
+          </p>
+          <p className="text-xs text-gray-400 mt-4">IT安全管理委员会 2024年2月1日</p>
+        </div>
+      ),
+    },
+  ];
+
+  // ── 专栏数据（林医生四篇 D-1~D-4）──
+  const columnItems: ColumnItem[] = [
+    {
+      id: 'col_d1',
+      title: '太赫兹脑电拓扑在睡眠障碍中的前沿应用',
+      author: '林德坤 主任医师',
+      date: '2024-01-20',
+      summary: '本文综述了太赫兹频段脑电拓扑成像技术在睡眠障碍诊断与治疗中的最新进展……',
+      content: (
+        <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+          <p className="italic text-gray-500">——林德坤 | 安宁深眠诊所 睡眠医学研究中心主任</p>
+          <p>近年来，太赫兹（THz）技术在生物医学领域的应用取得了突破性进展。特别是在睡眠障碍成像方面，THz脉冲能够穿透颅骨，以微创方式采集深层脑区活动拓扑……</p>
+          <p>我们诊所引入的 Morpheus-III 系统正是基于此原理，通过构建全脑"数字映射"，实现对患者睡眠周期的精确调控……</p>
+          <p className="text-xs text-gray-400 mt-4">全文刊载于《中国睡眠研究杂志》2024年第1期</p>
+        </div>
+      ),
+    },
+    {
+      id: 'col_d2',
+      title: '乙类精神药物在DNR辅助疗法中的剂量探索',
+      author: '林德坤 主任医师',
+      date: '2024-02-05',
+      summary: '数字神经重映射（DNR）疗法的核心在于精确的药物-设备协同……',
+      content: (
+        <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+          <p className="italic text-gray-500">——林德坤 | 安宁深眠诊所 DNR研究组组长</p>
+          <p>数字神经重映射（Digital Neuro-Remapping, DNR）疗法是我诊所自主研发的核心技术平台。该疗法通过在受控镇静状态下，对患者大脑进行高精度电磁脉冲序列扫描，实现神经通路的"数字化重建"……</p>
+          <InvestigateNode hookId="col_d2_permission" runeId="RUNE_04" feedbackText="这一段……讲的是权限控制？还是别的什么？">
+            <p className="bg-gray-100 p-3 rounded border-l-4 border-gray-400">
+              值得注意的是，系统在执行深度扫描时，需要获取<strong>最高权限授权</strong>。该授权密钥由诊所管理层持有，非经特别批准，普通技术人员无法接触核心算法参数……
+            </p>
+          </InvestigateNode>
+          <p className="text-xs text-gray-400 mt-4">发表于内部技术通讯 No.47</p>
+        </div>
+      ),
+    },
+    {
+      id: 'col_d3',
+      title: '救助性睡眠干预的伦理边界再审视',
+      author: '林德坤 主任医师',
+      date: '2024-02-18',
+      summary: '当技术能力超越伦理共识时，医者该何去何从？',
+      content: (
+        <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+          <p className="italic text-gray-500">——林德坤 | 安宁深眠诊所</p>
+          <p>本文试图探讨一个日益紧迫的问题：当睡眠干预技术的能力边界不断拓展，我们是否准备好了与之匹配的伦理框架？</p>
+          <p>在临床实践中，我时常面对这样的困境——患者的痛苦是真实的、其家属的期望是迫切的，而我们手中的工具……其力量，或许已经超越了最初的设计意图。</p>
+          <p className="text-gray-500 italic">如果有人因此而质疑我的选择，我只能说——我从未自愿成为这台机器的一部分。</p>
+          <p className="text-xs text-gray-400 mt-4">本文仅代表个人观点，未经诊所管理层审阅</p>
+        </div>
+      ),
+    },
+    {
+      id: 'col_d4',
+      title: '苦役阈值：持续性深度镇静的神经代谢风险',
+      author: '林德坤 主任医师',
+      date: '2024-03-01',
+      summary: '长期深度镇静状态下，大脑的能量代谢模式将发生不可逆变化……',
+      content: (
+        <div className="space-y-3 text-sm leading-relaxed text-gray-700">
+          <p className="italic text-gray-500">——林德坤 | 安宁深眠诊所 DNR研究组</p>
+          <p>当患者处于持续超过72小时的深度镇静状态时，其大脑前额叶皮层的葡萄糖代谢率会显著下降至基线水平的23%以下——这一现象被我们内部称为"苦役阈值"。</p>
+          <p>跨越苦役阈值后，患者的海马体开始呈现类似于退行性病变的影像学特征。更令人不安的是，其EEG读数与仪器后台记录的"共振哈希值"之间，存在着某种我们目前无法解释的数学相关性……</p>
+          <p className="font-bold text-gray-900 mt-4">
+            <span className="text-red-700">太</span>多的事情，已经超出了一个医生能独自承担的范围。<br />
+            <span className="text-red-700">乙</span>等密级的内部文件里，藏着我放不下的东西。<br />
+            <span className="text-red-700">救</span>赎，或许从来就不在任何一本教科书里。<br />
+            <span className="text-red-700">苦</span>海无涯，而我已是其中的一叶扁舟。
+          </p>
+          <p className="text-xs text-gray-400 mt-4">
+            ——未完成草稿，自动保存于 2024-03-01 03:47 AM
+          </p>
+        </div>
+      ),
+    },
+  ];
+
+  const currentNews = newsItems.find(n => n.id === selectedNews);
+  const currentColumn = columnItems.find(c => c.id === selectedColumn);
 
   return (
-    <div className="bg-[#f4f7f6] font-sans text-[#333333] min-h-full">
-      {/* Header */}
-      <header className="bg-white border-b-4 border-[#0056b3] shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            {/* Fake Logo - Infinity / Mobius */}
-            <div className="w-12 h-12 text-[#0056b3] flex items-center justify-center text-4xl font-serif relative group cursor-pointer">
-              ∞
-              {/* Fragment 1: Hidden in logo hover */}
+    <div className="min-h-screen bg-[#f4f7f6]">
+      {/* 顶部导航栏 */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <InvestigateNode hookId="logo_hover" condition={!hasRune('RUNE_06')}>
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-amber-600 bg-white/80 transition-opacity"
-                onClick={(e) => { e.stopPropagation(); addFragment(1); alert('你发现了一枚古铜色的符文碎片。'); }}
+                className="cursor-pointer select-none"
+                onMouseEnter={handleLogoEnter}
+                onMouseLeave={handleLogoLeave}
               >
-                符
+                <img src="/images/clinic_logo.png" alt="LOGO" className="h-10 w-10 object-contain" />
               </div>
-            </div>
+            </InvestigateNode>
             <div>
-              <h1 className="text-3xl font-bold tracking-wider text-[#003d82]">安宁深眠诊所</h1>
-              <p className="text-sm text-[#666666] tracking-widest mt-1">TRANQUIL SLEEP CLINIC</p>
+              <h1 className="text-lg font-bold text-[#2c5f7c]">安宁深眠诊所</h1>
+              <p className="text-[10px] text-gray-400 font-mono">TRANQUIL SLEEP CLINIC</p>
             </div>
           </div>
-          <div className="text-right text-sm text-[#666666]">
-            <p className="font-bold text-[#0056b3] text-lg">400-820-XXXX</p>
-            <p>南郊市科技园西路8号</p>
-          </div>
+          <nav className="flex gap-1">
+            {([
+              ['home', '首页'],
+              ['news', '公告中心'],
+              ['column', '专家专栏'],
+              ['archive', '档案查询'],
+              ['about', '关于我们'],
+            ] as [Tab, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                className={`px-4 py-2 text-sm rounded-md transition-colors
+                  ${activeTab === key ? 'bg-[#2c5f7c] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => { setActiveTab(key); setSelectedNews(null); setSelectedColumn(null); setArchiveResult(null); }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="bg-[#0056b3] text-white sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 flex">
-          {[
-            { id: 'home', label: '首页' },
-            { id: 'news', label: '新闻中心' },
-            { id: 'doctors', label: '专家团队' },
-            { id: 'appointment', label: '在线挂号查询' },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
-              className={`px-8 py-4 text-sm font-bold transition-colors ${activeTab === item.id ? 'bg-[#003d82]' : 'hover:bg-[#004494]'
-                }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+      {/* LOGO 触发闪白 */}
+      {logoTriggered && (
+        <div className="fixed inset-0 bg-white z-[9999] animate-pulse" style={{ animationDuration: '0.1s' }} />
+      )}
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-12 min-h-[600px]">
+      {/* 内容区 */}
+      <main className="max-w-5xl mx-auto px-6 py-8">
 
+        {/* ===== 首页 ===== */}
         {activeTab === 'home' && (
-          <div className="space-y-12 animate-in fade-in">
-            {/* Hero Section */}
-            <div className="bg-white p-12 shadow-sm border border-[#e0e0e0] text-center space-y-6">
-              <h2 className="text-3xl font-bold text-[#003d82]">为您找回失去的安宁</h2>
-              <p className="text-lg text-[#666666] max-w-3xl mx-auto leading-relaxed">
-                通过第三代深度神经共振（DNR）疗法，实现对大脑神经网络的深度刺激，使您的精神与肉体实现暂时的完美剥离，从而达到毫无杂念的沉浸式深眠体验。
-              </p>
+          <div className="space-y-8">
+            {/* Hero */}
+            <div className="bg-gradient-to-r from-[#2c5f7c] to-[#1a3a4a] rounded-xl p-8 text-white">
+              <h2 className="text-2xl font-bold mb-2">科技守护安睡 · 深眠重塑生活</h2>
+              <p className="text-blue-100 text-sm mb-4">国际领先的 DNR 数字神经重映射技术，为您定制专属睡眠方案</p>
+              <div className="flex gap-4 text-xs">
+                <div className="flex items-center gap-1"><Award className="w-4 h-4" /> 三甲合作</div>
+                <div className="flex items-center gap-1"><Users className="w-4 h-4" /> 19,600+ 治愈案例</div>
+                <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> 24H 专业监护</div>
+              </div>
             </div>
 
-            {/* Testimonials */}
+            {/* 康复者证言 */}
             <div>
-              <h3 className="text-center font-bold text-xl text-[#003d82] mb-8 relative inline-block left-1/2 -translate-x-1/2">
-                <span className="bg-[#f4f7f6] px-4 relative z-10">康复者反馈</span>
-                <span className="absolute top-1/2 left-[-50px] right-[-50px] h-[1px] bg-[#cccccc] z-0"></span>
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
-                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
-                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
-                    自从接受了DNR疗法，我那些烦人的多余情绪全都不见了。现在我的大脑像一张白纸一样干净，每天都能完美执行经理交给我的任务。工作效率提升了300%！
-                  </p>
-                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 某科技公司程序员 王先生</div>
-                </div>
-
-                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
-                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
-                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
-                    失眠折磨了我十年，昨晚在这里的一小时治疗，让我体验到了前所未有的深度沉浸。醒来后我不再感到难过，甚至忘记了为什么我刚开始会觉得难过。太神奇了。
-                  </p>
-                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 自由撰稿人 李女士</div>
-                </div>
-
-                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
-                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
-                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
-                    <span className="text-gray-700">医生非常专业，环境也很好。只是我有时候会觉得</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-700 to-gray-200">自己变得不太像自己了，有些记忆像是别人的</span>
-                    <span className="text-gray-700">。总而言之是一次很棒的体验！强烈推荐给所有压力大的朋友们！</span>
-                  </p>
-                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 待业青年 张某</div>
-                </div>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">💬 康复者心声</h3>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { name: '王丽芬', img: '/images/patient_1.png', text: '在安宁诊所治疗两个月后，困扰我十年的失眠终于好了！', date: '2023-11' },
+                  { name: '张海明', img: '/images/patient_2.png', text: '非常专业的医疗团队，DNR疗法效果显著。', date: '2023-12' },
+                  { name: '陈国良', img: '/images/patient_3.png', text: '感谢林主任团队，让我重新找到了安稳的睡眠。', date: '2024-01' },
+                ].map(p => (
+                  <div key={p.name} className="bg-white rounded-lg shadow p-4">
+                    <img src={p.img} alt={p.name} className="w-full h-40 object-cover rounded mb-3" />
+                    <p className="text-sm text-gray-700 italic mb-2">"{p.text}"</p>
+                    <p className="text-xs text-gray-500">
+                      —— <span className="clinic-link" onClick={() => {
+                        setActiveTab('archive');
+                        setArchiveQuery(p.name);
+                        setArchiveResult('404');
+                      }}>{p.name}</span>，{p.date}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'news' && (
-          <div className="animate-in fade-in flex gap-8">
-            {/* Sidebar Search */}
-            <div className="w-1/3 space-y-6">
-              <div className="bg-white p-6 shadow-sm border border-[#e0e0e0]">
-                <h3 className="font-bold text-lg mb-4 border-l-4 border-[#0056b3] pl-3">新闻检索</h3>
-                <form onSubmit={handleNewsSearch} className="space-y-4">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="输入关键词..."
-                    className="w-full border border-[#cccccc] px-4 py-2 focus:outline-none focus:border-[#0056b3]"
-                  />
-                  <button type="submit" className="w-full bg-[#0056b3] text-white py-2 hover:bg-[#003d82] transition-colors flex items-center justify-center gap-2">
-                    <Search className="w-4 h-4" /> 搜索
-                  </button>
-                </form>
+        {/* ===== 公告中心 ===== */}
+        {activeTab === 'news' && !selectedNews && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <FileText className="w-5 h-5" /> 公告中心
+            </h2>
+            {newsItems.map(news => (
+              <div
+                key={news.id}
+                className="bg-white rounded-lg shadow p-5 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setSelectedNews(news.id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded mr-2">{news.tag}</span>
+                    <span className="font-bold text-gray-800">{news.title}</span>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0">{news.date}</span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">{news.summary}</p>
+                <div className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                  阅读全文 <ChevronRight className="w-3 h-3" />
+                </div>
               </div>
-            </div>
-
-            {/* Results */}
-            <div className="w-2/3 bg-white p-8 shadow-sm border border-[#e0e0e0] min-h-[400px]">
-              {!hasSearched ? (
-                <div className="text-center text-[#999999] mt-20">
-                  请输入关键词检索历史新闻公告。
-                </div>
-              ) : searchResults.length === 0 ? (
-                <div className="text-center text-red-600 mt-20">
-                  未找到相关新闻。
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {searchResults.map((news, index) => (
-                    <div
-                      key={news.id}
-                      className="border-b border-[#eeeeee] pb-8 last:border-0 animate-in fade-in slide-in-from-bottom-4"
-                      style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
-                    >
-                      <h3 className="text-xl font-bold text-[#003d82] mb-2">{news.title}</h3>
-                      <p className="text-sm text-[#999999] mb-4 font-mono">{news.date}</p>
-
-                      {news.image === 'zhaoqi' && (
-                        <div
-                          className="w-full h-48 bg-zinc-200 mb-4 flex flex-col items-center justify-center cursor-crosshair relative group border border-zinc-300 overflow-hidden"
-                          onClick={handleZhaoQiImageClick}
-                        >
-                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-50"></div>
-                          <span className="text-zinc-500 z-10">[点击放大查看 赵启工作照.jpg]</span>
-                          <span className="text-xs text-zinc-400 mt-2 z-10">（图片背景中的电脑屏幕似乎亮着）</span>
-                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity z-20">
-                            <span className="text-white font-mono text-sm border border-white px-3 py-1 mb-2">放大图片</span>
-                            <span className="text-green-400 font-mono text-xs">检测到屏幕反光中的URL...</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <p className="text-[#444444] leading-relaxed">
-                        {/* 动态关键词高亮 */}
-                        {searchQuery.trim() ? (
-                          news.content.split(new RegExp(`(${searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')).map((part, i) => (
-                            <React.Fragment key={i}>
-                              {part.toLowerCase() === searchQuery.trim().toLowerCase()
-                                ? <strong className="text-black bg-yellow-100">{part}</strong>
-                                : part}
-                            </React.Fragment>
-                          ))
-                        ) : (
-                          news.content
-                        )}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            ))}
+            {/* 底部极小字信息安全条款链接 */}
+            <div className="text-center mt-8">
+              <span
+                className="text-[9px] text-gray-300 hover:text-gray-500 cursor-pointer"
+                onClick={() => setSelectedNews('news_security')}
+              >
+                《信息安全管理规范》
+              </span>
             </div>
           </div>
         )}
 
-        {activeTab === 'appointment' && (
-          <div className="animate-in fade-in max-w-2xl mx-auto bg-white p-8 shadow-sm border border-[#e0e0e0]">
-            <h2 className="text-2xl font-bold text-[#003d82] mb-6 border-b pb-4">就诊进度查询</h2>
-            <form onSubmit={handleAppointmentSearch} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-[#666666] mb-2">请输入门诊挂号条码：</label>
-                <input
-                  type="text"
-                  value={appointmentQuery}
-                  onChange={(e) => setAppointmentQuery(e.target.value)}
-                  placeholder="例如：LX-001-XXX"
-                  className="w-full border-2 border-[#cccccc] px-4 py-3 text-lg font-mono focus:outline-none focus:border-[#0056b3]"
-                />
+        {/* 新闻详情 */}
+        {activeTab === 'news' && selectedNews && currentNews && (
+          <div>
+            <button className="text-sm text-blue-600 mb-4 flex items-center gap-1" onClick={() => setSelectedNews(null)}>
+              ← 返回公告列表
+            </button>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{currentNews.title}</h2>
+              <div className="text-xs text-gray-400 mb-4">{currentNews.date} · {currentNews.tag}</div>
+              {currentNews.content}
+            </div>
+          </div>
+        )}
+
+        {/* ===== 专家专栏 ===== */}
+        {activeTab === 'column' && !selectedColumn && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-800">🩺 专家专栏 — 林德坤 主任医师</h2>
+            <p className="text-sm text-gray-500 mb-4">睡眠医学研究中心主任 · DNR研究组组长 · 首席科学家</p>
+            {columnItems.map(col => (
+              <div
+                key={col.id}
+                className="bg-white rounded-lg shadow p-5 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setSelectedColumn(col.id)}
+              >
+                <div className="font-bold text-gray-800">{col.title}</div>
+                <p className="text-sm text-gray-600 mt-1">{col.summary}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">{col.author} · {col.date}</span>
+                  <span className="text-xs text-blue-600 flex items-center gap-1">阅读 <ChevronRight className="w-3 h-3" /></span>
+                </div>
               </div>
-              <button type="submit" className="bg-[#0056b3] text-white px-8 py-3 font-bold hover:bg-[#003d82] transition-colors">
-                查询进度
+            ))}
+          </div>
+        )}
+
+        {/* 专栏详情 */}
+        {activeTab === 'column' && selectedColumn && currentColumn && (
+          <div>
+            <button className="text-sm text-blue-600 mb-4 flex items-center gap-1" onClick={() => setSelectedColumn(null)}>
+              ← 返回专栏列表
+            </button>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{currentColumn.title}</h2>
+              <div className="text-xs text-gray-400 mb-4">{currentColumn.author} · {currentColumn.date}</div>
+              {currentColumn.content}
+            </div>
+          </div>
+        )}
+
+        {/* ===== 档案查询 ===== */}
+        {activeTab === 'archive' && (
+          <div className="max-w-lg mx-auto space-y-6">
+            <h2 className="text-xl font-bold text-gray-800 text-center">📋 患者档案查询</h2>
+            <form onSubmit={handleArchiveSearch} className="flex gap-2">
+              <input
+                value={archiveQuery}
+                onChange={(e) => setArchiveQuery(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="输入患者档案编号或姓名……"
+              />
+              <button className="px-5 py-2 bg-[#2c5f7c] text-white rounded-lg text-sm hover:bg-[#1a3a4a] transition-colors flex items-center gap-1">
+                <Search className="w-4 h-4" /> 查询
               </button>
             </form>
 
-            {appointmentResult && (
-              <div className={`mt-8 p-4 border-l-4 ${appointmentResult.includes('废弃物') ? 'bg-red-50 border-red-600 text-red-800' : 'bg-gray-50 border-gray-400 text-gray-700'}`}>
-                {appointmentResult}
+            {archiveResult === 'redirect' && (
+              <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 text-sm text-yellow-800">
+                <p className="font-bold mb-2">⚠ 查询结果</p>
+                <p>档案编号 <span className="font-mono font-bold">LX-044-YIN</span> 已被标记为<strong>「特殊残破资源库」</strong>级别。</p>
+                <p className="mt-2 text-xs text-yellow-600">如需进一步了解，请前往 <span className="underline cursor-pointer" onClick={() => { setActiveTab('news'); }}>公告中心</span> 查看相关通知。</p>
+              </div>
+            )}
+
+            {archiveResult === '404' && (
+              <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-center">
+                <p className="text-red-600 font-mono text-lg font-bold">404 Not Found</p>
+                <p className="text-red-400 font-mono text-xs mt-1">// System.Meltdown</p>
+                <p className="text-red-300 text-xs mt-3">未找到匹配的有效档案记录。</p>
               </div>
             )}
           </div>
         )}
 
-        {activeTab === 'doctors' && (
-          <div className="animate-in fade-in max-w-4xl mx-auto">
-            {/* Team Intro */}
-            <div className="bg-white shadow-sm border border-[#e0e0e0] p-6 mb-8 text-sm text-[#444]">
-              <h3 className="font-bold text-lg text-[#003d82] mb-4 border-l-4 border-[#0056b3] pl-2">专家团队简介</h3>
-              <p className="leading-relaxed mb-3">
-                安宁深眠诊所拥有一支由顶尖神经科学家、精神卫生专家和网络数据分析师组成的交叉学科团队。我们不仅精通传统的心理疏导，更深入涉猎了意识阻断与潜意识格式化领域。
-              </p>
-              <p className="leading-relaxed">
-                在“伊甸园计划”取得突破性进展后，我们成功地将不良记忆与多余情绪的剥离成功率提升至99.9%。不要让过去的创伤成为未来的阻碍——在这里，我们帮您<span className="italic">删除负担，重塑新生</span>。
-              </p>
-            </div>
-
-            <h2 className="text-2xl font-bold text-[#003d82] mb-6 border-b pb-4">前沿专栏 - 林医生</h2>
-            <div className="bg-blue-50 border border-blue-200 p-4 mb-8 text-sm text-[#666666]">
-              <p><strong>林医生简介：</strong> 我院前神经共振科实习医生，擅长通过生活方式干预改善睡眠质量。她曾在此开设专栏，分享了许多实用的睡眠科普知识。</p>
-            </div>
-
-            <div className="space-y-6">
-              {doctorArticles.map((article, index) => (
-                <div key={article.id} className="bg-white p-6 shadow-sm border border-[#e0e0e0] hover:shadow-md transition-shadow">
-                  <h3 className="text-xl font-bold text-[#333333] mb-3">
-                    {/* Highlight the first letter slightly to hint the player */}
-                    <span className="text-[#0056b3] font-serif pr-[1px]">{article.title.charAt(0)}</span>
-                    {article.title.slice(1)}
-                  </h3>
-                  <p className="text-[#666666] leading-relaxed">
-                    {article.excerpt}
-                    {/* Fragment 6 hidden in the period of the last article */}
-                    {index === 5 && (
-                      <span
-                        className="cursor-pointer hover:text-amber-600 font-bold transition-colors"
-                        onClick={() => {
-                          addFragment(6);
-                          alert('你在离职信的句号里发现了一枚古铜色的符文碎片。');
-                        }}
-                      >
-                        。
-                      </span>
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <button
-                onClick={() => {
-                  addClue({
-                    id: 'taiyi',
-                    title: '专栏文章的藏头诗',
-                    description: '林医生前四篇文章标题的首字连起来是：太、乙、救、苦。这似乎是某种暗号。'
-                  });
-                }}
-                className="text-xs text-[#999999] hover:text-[#0056b3] underline"
-              >
-                [整理文章标题]
-              </button>
+        {/* ===== 关于我们 ===== */}
+        {activeTab === 'about' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-gray-800">关于安宁深眠诊所</h2>
+            <div className="bg-white rounded-lg shadow p-6 space-y-4 text-sm leading-relaxed text-gray-700">
+              <p>安宁深眠诊所成立于2019年，坐落于南郊市科技创新产业园区，是一家集睡眠障碍诊断、治疗、科研于一体的专业医疗机构。</p>
+              <p>诊所配备国际领先的 <strong>Morpheus-III 全景脑电拓扑仪</strong>及自主研发的 <strong>DNR（数字神经重映射）</strong>技术平台，致力于为广大睡眠障碍患者提供精准、高效、安全的诊疗服务。</p>
+              <p>截至目前，诊所已累计服务患者超过 <strong>19,600</strong> 人次，综合康复率保持在 <strong>97.3%</strong> 以上。</p>
+              <div className="flex gap-6 text-xs text-gray-500 mt-4">
+                <div className="flex items-center gap-1"><MapPin className="w-4 h-4" /> 南郊市高新区安宁路188号</div>
+                <div className="flex items-center gap-1"><Phone className="w-4 h-4" /> 400-XXXX-8023</div>
+                <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> 门诊：周一至周六 8:00-17:00</div>
+              </div>
             </div>
           </div>
         )}
-
       </main>
 
-      {/* Image Modal */}
-      {showImageModal && (
-        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowImageModal(false)}>
-          <div className="relative max-w-4xl w-full bg-zinc-900 border border-zinc-700 p-2 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setShowImageModal(false)}
-              className="absolute -top-10 right-0 text-white hover:text-red-400 transition-colors"
-            >
-              关闭 [X]
-            </button>
-            <div className="aspect-video bg-zinc-800 relative overflow-hidden flex items-center justify-center">
-              {/* Simulated blurry photo background */}
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 mix-blend-overlay"></div>
-              <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-700"></div>
-
-              {/* The "Screen" in the background */}
-              <div className="absolute right-1/4 top-1/4 w-64 h-48 bg-black border-8 border-zinc-900 rounded-sm transform rotate-12 skew-x-12 shadow-[0_0_50px_rgba(0,255,0,0.1)] flex items-start p-2">
-                <div className="w-full h-full border border-green-900/30 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
-                  <div className="text-green-500 font-mono text-[10px] opacity-80 break-all leading-tight blur-[0.5px]">
-                    <span className="text-white bg-green-900/50 px-1">https://oa.tranquil-sleep.com/login</span>
-                    <br /><br />
-                    &gt; SYSTEM BOOT...<br />
-                    &gt; CHECKING PROTOCOLS...<br />
-                    &gt; AWAITING CREDENTIALS...
-                  </div>
-                </div>
-              </div>
-
-              {/* Foreground silhouette (Zhao Qi) */}
-              <div className="absolute bottom-0 left-1/4 w-64 h-80 bg-zinc-900 rounded-t-full blur-md opacity-80"></div>
-            </div>
-            <div className="bg-black text-zinc-400 p-4 font-mono text-sm flex justify-between items-center">
-              <span>IMG_20240520_1422.jpg</span>
-              <span className="text-green-400 animate-pulse">线索已记录至笔记本</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="bg-[#333333] text-[#999999] py-8 text-center text-sm">
-        <p>
-          © 2024 安宁深眠诊所 版权所有
-          <span
-            className="cursor-pointer hover:text-amber-600 ml-1"
-            onClick={() => { addFragment(2); alert('你在版权声明处发现了一枚古铜色的符文碎片。'); }}
-          >
-            ©
-          </span>
-        </p>
-        <p className="mt-2 text-xs">本网站提供的信息仅供参考，不能替代专业医生的诊断和治疗。</p>
+      {/* 底部 */}
+      <footer className="bg-gray-100 border-t border-gray-200 py-4 text-center text-xs text-gray-400">
+        © 2024 安宁深眠诊所 | 南郊市卫健委备案 No.XXXX |
+        <span className="cursor-pointer hover:text-gray-600" onClick={() => { setActiveTab('news'); setSelectedNews('news_security'); }}>
+          信息安全管理规范
+        </span>
       </footer>
     </div>
   );

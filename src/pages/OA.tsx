@@ -1,302 +1,400 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../GameContext';
-import { Terminal, FileText, Settings, AlertTriangle } from 'lucide-react';
+import { InvestigateNode } from '../components/InvestigateNode';
+import { Lock, Terminal, FileText, Camera, BookOpen, AlertCircle } from 'lucide-react';
+
+// ═══════════════════════════════════════════
+//  OA · V3 黑区 · 诊所内部办公自动化系统
+//  登录拦截 + 采购单 E-1 + 赵启日志 C + 照片 E-2 + 记事本 + 终端
+// ═══════════════════════════════════════════
+
+type OAView = 'login' | 'dashboard' | 'purchase' | 'logs' | 'photo' | 'notebook' | 'terminal';
 
 export function OA() {
-  const { addClue, addFragment, setCurrentApp } = useGame();
-  const [empId, setEmpId] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [oaTab, setOaTab] = useState<'purchase' | 'logs' | 'system'>('purchase');
-  const [talismanPeeled, setTalismanPeeled] = useState(false);
-  const [overrideCode, setOverrideCode] = useState('');
+  const {
+    isOALoggedIn, setOALoggedIn, canLoginOA,
+    readHook, hasReadHook, collectRune, hasRune,
+    collectedRunes, setCurrentApp, setEndingType,
+  } = useGame();
 
+  const [view, setView] = useState<OAView>(isOALoggedIn ? 'dashboard' : 'login');
+  const [loginId, setLoginId] = useState('');
+  const [loginPwd, setLoginPwd] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [terminalInput, setTerminalInput] = useState('');
+  const [terminalHistory, setTerminalHistory] = useState<string[]>([
+    '> TRANQUIL-OS INTRANET TERMINAL v2.4.1',
+    '> 身份验证通过。欢迎，已授权用户。',
+    '> 输入 HELP 查看可用命令',
+    '',
+  ]);
+
+  // 登录处理
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (empId === '8023' && password.toLowerCase() === 'fswltz') {
-      setIsLoggedIn(true);
-      addClue({
-        id: 'oa-access',
-        title: 'OA系统访问权限',
-        description: '成功使用前台经理的工号(8023)和口令拼音(fswltz)登入内部系统。'
-      });
+    // 前置条件拦截
+    if (!canLoginOA()) {
+      setLoginError('// 错误：操作过速。无前置设备授权记录。');
+      return;
+    }
+
+    if (loginId === '8023' && loginPwd === 'fswltz') {
+      setOALoggedIn(true);
+      setView('dashboard');
+      readHook('oa_logged_in');
     } else {
-      setError('ACCESS DENIED. INVALID CREDENTIALS.');
+      setLoginError('// 认证失败：工号或口令不匹配');
     }
   };
 
-  const handleOverride = (e: React.FormEvent) => {
+  // 终端命令处理
+  const handleTerminalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (overrideCode.toLowerCase() === 'taiyijiuku') {
-      // Transition to Act 4
-      document.documentElement.requestFullscreen().catch(() => {});
-      setCurrentApp('terminal');
+    const cmd = terminalInput.trim().toUpperCase();
+    const newHistory = [...terminalHistory, `> ${terminalInput}`];
+
+    if (cmd === 'HELP') {
+      newHistory.push(
+        '  AVAILABLE COMMANDS:',
+        '  STATUS   - 系统状态',
+        '  RUNES    - 碎片校验',
+        '  OVERRIDE - 核心校准（需要授权密钥）',
+        ''
+      );
+    } else if (cmd === 'STATUS') {
+      newHistory.push(
+        `  系统状态: 运行中`,
+        `  活跃节点: 19,847`,
+        `  B2层液冷机柜: 在线 [7/7]`,
+        `  当前功耗: 6,580 kW`,
+        `  共振哈希值: [持续生成中]`,
+        ''
+      );
+    } else if (cmd === 'RUNES') {
+      newHistory.push(
+        `  碎片校验: [${collectedRunes.length}/7]`,
+        ...collectedRunes.map(r => `    ✓ ${r}`),
+        collectedRunes.length === 7 ? '  >>> 全部碎片已集齐。OVERRIDE 命令已解锁。' : `  >>> 缺少 ${7 - collectedRunes.length} 枚碎片。`,
+        ''
+      );
+    } else if (cmd.startsWith('OVERRIDE')) {
+      if (collectedRunes.length < 7) {
+        newHistory.push('  // 错误：碎片校验未通过 [' + collectedRunes.length + '/7]', '');
+      } else {
+        const key = cmd.replace('OVERRIDE', '').trim();
+        if (key === 'TAIYIJIUKU') {
+          newHistory.push(
+            '  >>> 授权密钥验证通过',
+            '  >>> 正在接入太岁核心……',
+            '  >>> 决策分支树已加载',
+            ''
+          );
+          // 进入终局
+          setTimeout(() => setCurrentApp('ending'), 1500);
+        } else if (key) {
+          newHistory.push('  // 错误：授权密钥不匹配', '');
+        } else {
+          newHistory.push('  用法: OVERRIDE <授权密钥>', '  提示: 密钥由两部分组成——标题的秘密 + 柜中的代码', '');
+        }
+      }
     } else {
-      setError('INVALID OVERRIDE CODE.');
+      newHistory.push(`  // 未知命令: ${terminalInput}`, '');
     }
+
+    setTerminalHistory(newHistory);
+    setTerminalInput('');
   };
 
-  if (isLoggedIn) {
+  // ── 登录界面 ──
+  if (view === 'login') {
     return (
-      <div className="min-h-full bg-[#121010] p-4 sm:p-8 font-mono text-[#00ff00] relative overflow-hidden flex flex-col">
-        <div className="crt-overlay"></div>
-        <div className="max-w-6xl w-full mx-auto relative z-10 flex-1 flex flex-col">
-          <div className="border-b-2 border-[#00ff00] pb-4 mb-6 flex justify-between items-end">
-            <div>
-              <h1 className="text-2xl font-bold tracking-widest">TRANQUIL SLEEP CLINIC - INTRANET</h1>
-              <p className="text-sm mt-1 opacity-70">SYSTEM VERSION 4.2.1 | USER: 8023</p>
-            </div>
-            <div className="text-right text-sm">
-              <p>STATUS: ONLINE</p>
-              <p>DATE: 甲辰年 四月十五 宜祭祀</p>
-            </div>
+      <div className="min-h-screen terminal-mode flex items-center justify-center">
+        <div className="w-96 p-8">
+          <div className="text-center mb-8">
+            <div className="text-2xl font-bold mb-1">TRANQUIL-OS</div>
+            <div className="text-xs text-[#005500]">INTRANET ACCESS PORTAL v2.4.1</div>
+            <div className="text-xs text-[#005500] mt-1">安宁深眠诊所 内部办公系统</div>
           </div>
-          
-          <div className="flex flex-1 border border-[#00ff00]/50 overflow-hidden">
-            {/* Sidebar */}
-            <div className="w-1/4 border-r border-[#00ff00]/50 p-4 flex flex-col gap-4 bg-[#00ff00]/5">
-              <button 
-                onClick={() => setOaTab('purchase')} 
-                className={`text-left px-4 py-3 border border-[#00ff00]/30 hover:bg-[#00ff00]/20 transition-colors flex items-center gap-3 ${oaTab === 'purchase' ? 'bg-[#00ff00]/20 font-bold' : ''}`}
-              >
-                <FileText className="w-5 h-5" />
-                近期采购清单
-              </button>
-              <button 
-                onClick={() => setOaTab('logs')} 
-                className={`text-left px-4 py-3 border border-[#00ff00]/30 hover:bg-[#00ff00]/20 transition-colors flex items-center gap-3 ${oaTab === 'logs' ? 'bg-[#00ff00]/20 font-bold' : ''}`}
-              >
-                <AlertTriangle className="w-5 h-5" />
-                IT维修日志
-              </button>
-              <button 
-                onClick={() => setOaTab('system')} 
-                className={`text-left px-4 py-3 border border-[#00ff00]/30 hover:bg-[#00ff00]/20 transition-colors flex items-center gap-3 mt-auto ${oaTab === 'system' ? 'bg-[#00ff00]/20 font-bold' : ''}`}
-              >
-                <Settings className="w-5 h-5" />
-                系统深度自检
-              </button>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-xs block mb-1">工号 (Employee ID)</label>
+              <input
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono"
+                placeholder="输入工号……"
+              />
             </div>
-
-            {/* Content Area */}
-            <div className="w-3/4 p-8 overflow-y-auto custom-scrollbar relative">
-              
-              {oaTab === 'purchase' && (
-                <div className="animate-in fade-in">
-                  <h2 className="text-xl font-bold mb-6 border-b border-[#00ff00]/30 pb-2">物资采购及入库记录 (5月)</h2>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#00ff00]/50 text-[#00ff00]/70">
-                        <th className="p-3">品名</th>
-                        <th className="p-3">数量</th>
-                        <th className="p-3">用途标注</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5">
-                        <td className="p-3">西门子液冷循环管</td>
-                        <td className="p-3">500米</td>
-                        <td className="p-3">机房冷却系统扩容</td>
-                      </tr>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5 text-amber-500">
-                        <td className="p-3">朱砂（特级研磨）</td>
-                        <td className="p-3">50公斤</td>
-                        <td className="p-3">实验室耗材</td>
-                      </tr>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5">
-                        <td className="p-3">3M服务器防尘滤网</td>
-                        <td className="p-3">200片</td>
-                        <td className="p-3">日常维护</td>
-                      </tr>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5 text-amber-500">
-                        <td className="p-3">百年雷击枣木</td>
-                        <td className="p-3">3吨</td>
-                        <td className="p-3">定制机柜底座</td>
-                      </tr>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5 text-amber-500 group relative">
-                        <td className="p-3">黑山羊血提取物（冻干）</td>
-                        <td className="p-3">20升</td>
-                        <td className="p-3">冷却液添加剂（特殊配方）</td>
-                        {/* Fragment 5 */}
-                        <td className="absolute inset-0 flex items-center justify-end pr-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span 
-                            className="text-amber-600 cursor-pointer text-xs border border-amber-600 px-1 bg-black/80" 
-                            onClick={() => { addFragment(5); alert('你在采购清单的阴影中发现了一枚古铜色的符文碎片。'); }}
-                          >
-                            符
-                          </span>
-                        </td>
-                      </tr>
-                      <tr className="border-b border-[#00ff00]/20 hover:bg-[#00ff00]/5 text-amber-500">
-                        <td className="p-3">黄表纸（手工竹浆）</td>
-                        <td className="p-3">2000张</td>
-                        <td className="p-3">防静电衬垫</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div className="mt-8 text-center">
-                    <button 
-                      onClick={() => {
-                        addClue({
-                          id: 'creepy-items',
-                          title: '诡异的采购清单',
-                          description: '诊所的采购清单里混杂着朱砂、雷击枣木、黑山羊血提取物和黄表纸等物品，这绝对不是正常的医疗机构耗材。'
-                        });
-                      }}
-                      className="text-xs text-[#00ff00]/50 hover:text-[#00ff00] underline"
-                    >
-                      [记录异常清单]
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {oaTab === 'logs' && (
-                <div className="animate-in fade-in space-y-6">
-                  <h2 className="text-xl font-bold mb-6 border-b border-[#00ff00]/30 pb-2 text-red-500">[紧急] 异常发现报告</h2>
-                  <div className="space-y-4 text-[#00ff00]/90 leading-relaxed">
-                    <p className="font-bold">6月1日 01:47</p>
-                    <p>我确定了。他们根本不是在治病。</p>
-                    <p>4号和7号机柜底座上刻的不是什么品牌Logo，是符咒。冷却液的"添加剂"就是他们采购清单上写的"黑山羊血提取物"。我在散热口捡到了烧过的黄表纸灰烬。</p>
-                    <p>我拍了那个标志（附图）——他们叫它"莫比乌斯太极符"。看着像个数学无限符号，但放大看，线条全是扭曲的篆书血字。</p>
-                    <p>我已经把停止服务器集群的唯一覆盖码分成两半。一半交给了林医生，让她藏在专栏文章里。另一半……</p>
-                  </div>
-                  
-                  {/* Interactive Photo */}
-                  <div className="relative w-full max-w-md h-64 border border-[#00ff00]/50 mt-8 overflow-hidden bg-[#0a0a0a] group">
-                    {/* Server Cabinet Background */}
-                    <div className="absolute inset-0 opacity-50 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                    <div className="absolute right-4 top-4 text-red-500 font-mono text-xl animate-pulse">66.6℃</div>
-                    <div className="absolute left-8 top-0 bottom-0 w-4 bg-zinc-800 border-x border-zinc-700"></div>
-                    
-                    {/* Hidden Text */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-mono text-2xl whitespace-nowrap z-10">
-                      后半码 = JiuKu
-                    </div>
-                    
-                    {/* Talisman Overlay */}
-                    <div 
-                      className={`absolute top-1/4 left-1/3 w-24 h-40 bg-[#e6c229] shadow-2xl z-20 transition-all duration-1000 origin-top cursor-pointer flex flex-col items-center py-4 ${talismanPeeled ? 'rotate-[-110deg] opacity-0 pointer-events-none' : 'hover:rotate-[-5deg]'}`}
-                      onClick={() => {
-                        setTalismanPeeled(true);
-                        addClue({
-                          id: 'code-half-2',
-                          title: '覆盖码后半段',
-                          description: '在赵启拍摄的机房照片中，揭开7号机柜上的黄色符纸，下面写着：后半码 = JiuKu'
-                        });
-                      }}
-                    >
-                      <div className="w-3 h-3 rounded-full bg-red-800/50 mb-2"></div>
-                      <div className="text-red-800 font-serif text-xl writing-vertical-rl tracking-widest font-bold opacity-80" style={{ writingMode: 'vertical-rl' }}>
-                        镇魂敕令
-                      </div>
-                    </div>
-                    
-                    {!talismanPeeled && (
-                      <div className="absolute bottom-2 left-2 text-xs text-[#00ff00]/50 z-30 pointer-events-none">
-                        [点击揭开符纸]
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {oaTab === 'system' && (
-                <div className="animate-in fade-in flex flex-col items-center justify-center h-full">
-                  <AlertTriangle className="w-16 h-16 text-red-500 mb-6 animate-pulse" />
-                  <h2 className="text-2xl font-bold mb-2 text-red-500">SYSTEM OVERRIDE REQUIRED</h2>
-                  <p className="text-[#00ff00]/70 mb-8 max-w-md text-center">
-                    深度自检将触及底层核心阵列。执行此操作不可逆，且可能导致系统崩溃。请输入主管级覆盖码以继续。
-                  </p>
-                  
-                  <form onSubmit={handleOverride} className="w-full max-w-sm space-y-4">
-                    <input 
-                      type="text" 
-                      value={overrideCode}
-                      onChange={(e) => setOverrideCode(e.target.value)}
-                      placeholder="ENTER OVERRIDE CODE"
-                      className="w-full bg-black border-2 border-red-500/50 px-4 py-3 text-red-500 font-bold text-center tracking-widest focus:outline-none focus:border-red-500 transition-colors"
-                      autoComplete="off"
-                    />
-                    
-                    {error && (
-                      <div className="text-red-500 text-sm font-bold animate-pulse text-center">
-                        {error}
-                      </div>
-                    )}
-
-                    <button 
-                      type="submit" 
-                      className="w-full bg-red-900/20 border-2 border-red-500 py-3 text-red-500 hover:bg-red-500 hover:text-black transition-colors font-bold tracking-widest"
-                    >
-                      EXECUTE DEEP SCAN
-                    </button>
-                  </form>
-                </div>
-              )}
-
+            <div>
+              <label className="text-xs block mb-1">口令 (Password)</label>
+              <input
+                type="password"
+                value={loginPwd}
+                onChange={(e) => setLoginPwd(e.target.value)}
+                className="w-full px-3 py-2 text-sm font-mono"
+                placeholder="输入口令……"
+              />
             </div>
+            <button type="submit" className="w-full py-2 text-sm font-mono">
+              {'>>> 登 录'}
+            </button>
+          </form>
+
+          {loginError && (
+            <div className="mt-4 text-red-400 text-xs font-mono text-center">
+              {loginError}
+            </div>
+          )}
+
+          <div className="mt-8 text-center text-[10px] text-[#003300]">
+            未授权访问将被记录并追溯
           </div>
         </div>
+        <div className="crt-overlay" />
       </div>
     );
   }
 
+  // ── Dashboard ──
   return (
-    <div className="min-h-full bg-[#121010] p-4 sm:p-8 font-mono text-[#00ff00] relative overflow-hidden flex items-center justify-center">
-      <div className="crt-overlay"></div>
-      
-      <div className="w-full max-w-md border-2 border-[#00ff00] p-8 shadow-[0_0_15px_rgba(0,255,0,0.2)] relative z-10 bg-black/80 backdrop-blur-sm">
-        <div className="flex flex-col items-center mb-8">
-          <Terminal className="w-12 h-12 mb-4" />
-          <h1 className="text-xl font-bold tracking-widest text-center">TRANQUIL SLEEP CLINIC<br/>SECURE LOGIN</h1>
+    <div className="min-h-screen terminal-mode">
+      <div className="crt-overlay" />
+
+      {/* 顶部导航 */}
+      <div className="border-b border-[#00ff00]/30 px-4 py-2 flex items-center justify-between">
+        <div className="text-xs">
+          TRANQUIL-OS INTRANET | 已登录用户：<span className="font-bold">8023</span>
         </div>
+        <div className="flex gap-3 text-xs">
+          <button className={`hover:underline ${view === 'dashboard' ? 'font-bold' : ''}`} onClick={() => setView('dashboard')}>[主页]</button>
+          <button className={`hover:underline ${view === 'purchase' ? 'font-bold' : ''}`} onClick={() => setView('purchase')}>[采购单]</button>
+          <button className={`hover:underline ${view === 'logs' ? 'font-bold' : ''}`} onClick={() => setView('logs')}>[巡检日志]</button>
+          <button className={`hover:underline ${view === 'photo' ? 'font-bold' : ''}`} onClick={() => setView('photo')}>[照片]</button>
+          <button className={`hover:underline ${view === 'notebook' ? 'font-bold' : ''}`} onClick={() => setView('notebook')}>[记事本]</button>
+          <button className={`hover:underline ${view === 'terminal' ? 'font-bold' : ''}`} onClick={() => setView('terminal')}>[终端]</button>
+        </div>
+      </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm mb-2 opacity-80">EMPLOYEE ID (工号):</label>
-            <input 
-              type="text" 
-              value={empId}
-              onChange={(e) => setEmpId(e.target.value)}
-              className="w-full bg-transparent border-b-2 border-[#00ff00]/50 px-2 py-1 text-[#00ff00] focus:outline-none focus:border-[#00ff00] transition-colors"
-              autoComplete="off"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm mb-2 opacity-80">PASSWORD (密码):</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border-b-2 border-[#00ff00]/50 px-2 py-1 text-[#00ff00] focus:outline-none focus:border-[#00ff00] transition-colors"
-            />
-          </div>
-
-          {error && (
-            <div className="text-red-500 text-sm font-bold animate-pulse text-center">
-              {error}
+      <div className="max-w-4xl mx-auto py-6 px-4">
+        {/* Dashboard 主页 */}
+        {view === 'dashboard' && (
+          <div className="space-y-4">
+            <div className="text-lg font-bold terminal-glitch">{'> '} 欢迎回来</div>
+            <div className="grid grid-cols-3 gap-4 text-xs">
+              <DashCard icon={<FileText className="w-5 h-5" />} label="采购入库审批单" desc="设备物资采购记录" onClick={() => setView('purchase')} />
+              <DashCard icon={<BookOpen className="w-5 h-5" />} label="赵启巡检日志" desc="IT运维巡检记录" onClick={() => setView('logs')} />
+              <DashCard icon={<Camera className="w-5 h-5" />} label="巡检照片" desc="7号柜现场留存" onClick={() => setView('photo')} />
+              <DashCard icon={<FileText className="w-5 h-5" />} label="赵启记事本" desc="个人笔记" onClick={() => setView('notebook')} />
+              <DashCard icon={<Terminal className="w-5 h-5" />} label="系统终端" desc="核心校准接口" onClick={() => setView('terminal')} />
             </div>
-          )}
+          </div>
+        )}
 
-          <button 
-            type="submit" 
-            className="w-full border-2 border-[#00ff00] py-3 hover:bg-[#00ff00] hover:text-black transition-colors font-bold tracking-widest mt-4"
-          >
-            AUTHENTICATE
-          </button>
-        </form>
+        {/* 采购单 E-1 */}
+        {view === 'purchase' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <button className="text-xs hover:underline" onClick={() => setView('dashboard')}>← 返回</button>
+              <span className="text-xs text-[#00ff00]/60">| 采购入库审批单</span>
+            </div>
+            <InvestigateNode hookId="oa_purchase_list" feedbackText="这些采购物品……完全不像是医疗用品。">
+              <div className="font-mono text-xs">
+                <div className="mb-2 text-[#00ff00]/70">文件编号：AQSM-2024-PUR-007 | 审批状态：已通过</div>
+                <table className="w-full border border-[#00ff00]/30">
+                  <thead>
+                    <tr className="border-b border-[#00ff00]/30">
+                      <th className="text-left p-2 border-r border-[#00ff00]/30">序号</th>
+                      <th className="text-left p-2 border-r border-[#00ff00]/30">物品名称</th>
+                      <th className="text-left p-2 border-r border-[#00ff00]/30">规格/型号</th>
+                      <th className="text-left p-2 border-r border-[#00ff00]/30">数量</th>
+                      <th className="text-left p-2">用途说明</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[#00ff00]/80">
+                    <tr className="border-b border-[#00ff00]/20">
+                      <td className="p-2 border-r border-[#00ff00]/20">1</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">枣木板材</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">雷击枣木/长≥1.2m</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">49块</td>
+                      <td className="p-2">B2层设备底座隔振材料</td>
+                    </tr>
+                    <tr className="border-b border-[#00ff00]/20">
+                      <td className="p-2 border-r border-[#00ff00]/20">2</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">天然朱砂粉</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">含 HgS≥98%/500g装</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">120瓶</td>
+                      <td className="p-2">特殊涂层配方原料</td>
+                    </tr>
+                    <tr className="border-b border-[#00ff00]/20">
+                      <td className="p-2 border-r border-[#00ff00]/20">3</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">黑山羊血（冻干）</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">医用级/500ml</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">200袋</td>
+                      <td className="p-2">生物传感器校准介质</td>
+                    </tr>
+                    <tr className="border-b border-[#00ff00]/20">
+                      <td className="p-2 border-r border-[#00ff00]/20">4</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">纯铜铆钉</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">M4×12mm 黄铜</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">10,000枚</td>
+                      <td className="p-2">机柜组件紧固件</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 border-r border-[#00ff00]/20">5</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">精密铸造蜡</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">低温型/10kg桶</td>
+                      <td className="p-2 border-r border-[#00ff00]/20">30桶</td>
+                      <td className="p-2">密封灌注材料</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="mt-2 text-[#00ff00]/40 text-[10px]">审批人：院务委员会 | 日期：2024-01-08</div>
+              </div>
+            </InvestigateNode>
+          </div>
+        )}
 
-        {/* Fragment 7: Hidden near a broken pixel/icon */}
-        <div 
-          className="absolute bottom-2 right-2 w-2 h-2 bg-[#00ff00]/20 cursor-pointer hover:bg-amber-500 transition-colors"
-          onClick={() => { addFragment(7); alert('你在终端的坏点处发现了一枚古铜色的符文碎片。'); }}
-          title="System Error 0x00F"
-        ></div>
+        {/* 赵启巡检日志 C */}
+        {view === 'logs' && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-4">
+              <button className="text-xs hover:underline" onClick={() => setView('dashboard')}>← 返回</button>
+              <span className="text-xs text-[#00ff00]/60">| 赵启巡检日志</span>
+            </div>
+            <div className="font-mono text-xs space-y-3 text-[#00ff00]/80">
+              <LogEntry date="2024-03-04" content="例行巡检B2层机房。7号液冷机柜散热风扇转速异常，持续高转。温度读数正常范围内。记录在案，继续观察。" />
+              <LogEntry date="2024-03-06" content="7号柜日均耗电量已升至420kW，是其他6台柜子总和的3倍以上。设计上限应为80kW/台。已向主管汇报，回复：'设计参数已更新，无需担心'。更新了什么？谁批准的？" />
+              <LogEntry date="2024-03-08" content="今天凌晨巡检时注意到B2层走廊尽头的应急灯持续闪烁。走近时，7号柜内部传出低频嗡鸣声，和之前不同——像是有节奏的脉冲。靠近柜门时体感温度明显偏高，但面板温度读数依然显示'正常'。传感器被篡改了？" />
+              <LogEntry date="2024-03-09" content="拆开了7号柜侧板做内部检查。发现异常：液冷管道的接口处被人用某种暗红色物质做了密封处理，不是标准硅胶。用手电照了一下柜体内壁——有人在上面贴了一张黄色的纸，上面写满了看不懂的字（篆书？）。拍了照片存档。" />
+              <LogEntry date="2024-03-10" content="查了一下那种红色密封物质。成分疑似含朱砂（硫化汞）。一个液冷服务器机柜用朱砂做密封？搜了采购记录——采购单上确实有'天然朱砂粉'120瓶和'黑山羊血'200袋。用途写的是'生物传感器校准''特殊涂层材料'。扯淡。" />
+              <LogEntry date="2024-03-11" content="继续调查。发现7号柜的实际功率已经飙到7000kW——整栋楼的变压器容量才6.5MW，光一台柜子就吃掉了超过100%。这在物理上不可能，除非供电系统有问题，或者功率计的读数是假的。但我亲手测的电流是真的。这里面到底跑的是什么？" />
+              <LogEntry date="2024-03-12" content="半夜又去了B2。打开了7号柜的侧面检修面板——看见里面的管道在抖。不是震动，是那种……脉搏一样的节奏性蠕动。液冷管道里流的不像是冷却液，颜色偏暗。写了邮件给主管，抄送院务委。" />
+              <LogEntry date="2024-03-13" highlight content={
+                <span>
+                  所有邮件都被退回了。公司邮箱被冻结。门禁卡B2层权限被撤销。<br />
+                  下午被叫去"谈话"。行政主任说我"过度解读技术参数"。让我签一份NDA。我没签。<br />
+                  晚上10点——护士又来了，端着那杯"褪黑素"。这次我没喝。我趁她走后把杯子倒进了样本瓶。明天送检。<br /><br />
+                  <span className="text-red-400">
+                    {`>>> 日志写入中断`}<br />
+                    {`>>> 最后时间戳: 2024-03-13 23:01:44`}<br />
+                    {`>>> 原因: [用户会话异常终止]`}
+                  </span>
+                </span>
+              } />
+            </div>
+          </div>
+        )}
+
+        {/* 照片 E-2 */}
+        {view === 'photo' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <button className="text-xs hover:underline" onClick={() => setView('dashboard')}>← 返回</button>
+              <span className="text-xs text-[#00ff00]/60">| 巡检照片 - 7号柜</span>
+            </div>
+            <InvestigateNode hookId="oa_photo_talisman" runeId="RUNE_01" feedbackText="照片上的符纸……右下角有一段代码注释。function_key = 'JiuKu'">
+              <div className="bg-black rounded-lg overflow-hidden border border-[#00ff00]/20">
+                <img src="/images/server_talisman.png" alt="7号柜符纸" className="w-full" />
+                <div className="p-3 text-[10px] text-[#00ff00]/60 space-y-1">
+                  <p>拍摄时间：2024-03-09 02:34 AM</p>
+                  <p>位置：B2层 7号液冷机柜 内侧面板</p>
+                  <p>拍摄者：赵启 (IT-EXT-0077)</p>
+                  <p className="text-yellow-500/60 mt-2">* 照片边缘有一张便条，手写潦草字迹："七个"</p>
+                </div>
+              </div>
+            </InvestigateNode>
+          </div>
+        )}
+
+        {/* 赵启记事本 */}
+        {view === 'notebook' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <button className="text-xs hover:underline" onClick={() => setView('dashboard')}>← 返回</button>
+              <span className="text-xs text-[#00ff00]/60">| 赵启 - 个人记事本</span>
+            </div>
+            <div className="font-mono text-xs space-y-3 text-[#00ff00]/70 leading-relaxed">
+              <p>// 赵启的个人笔记 - 勿动</p>
+              <p>3/5 - 今天到安宁的第9个月。这份外包合同还有3个月到期。争取不续约了。</p>
+              <p>3/7 - 7号柜的问题越来越严重。但每次汇报都被糊弄过去。他们在隐瞒什么？</p>
+              <p>3/9 - 拍到了柜子里面的符纸。里面有一段看起来像代码注释的东西：<span className="text-yellow-400">function_key = "JiuKu"</span></p>
+              <p>3/10 - "JiuKu"是什么意思？救苦？九窟？</p>
+              <p>3/11 - 在林医生的专栏文章里发现了端倪。他那四篇文章的标题首字连起来是——</p>
+              <p className="text-yellow-400">太、乙、救、苦 → <strong>TaiYi</strong></p>
+              <p>3/12 - 那么完整的密钥应该是：<span className="text-yellow-400">TaiYi + JiuKu = TaiYiJiuKu</span></p>
+              <p>3/12 - 但这个密钥是用来干什么的？我在系统里找到了一个隐藏的终端接口，需要执行OVERRIDE命令……</p>
+              <p>3/13 - 今天是最后一天了。不管怎样，我要试一试。</p>
+              <InvestigateNode hookId="oa_notebook_end" runeId="RUNE_05" feedbackText="记事本到这里就结束了……赵启再也没有写过新的内容。">
+                <p className="text-red-400/60 mt-4">
+                  // 最后更新：2024-03-13 22:47<br />
+                  // 文件状态：被标记为删除但未清理<br />
+                  <br />
+                  林医生专栏藏着另一半。如果你也在调查，去官网看看。
+                </p>
+              </InvestigateNode>
+            </div>
+          </div>
+        )}
+
+        {/* 终端 */}
+        {view === 'terminal' && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-4">
+              <button className="text-xs hover:underline" onClick={() => setView('dashboard')}>← 返回</button>
+              <span className="text-xs text-[#00ff00]/60">| 系统终端</span>
+            </div>
+            <div className="bg-black border border-[#00ff00]/20 rounded p-4 font-mono text-xs min-h-[300px]">
+              {terminalHistory.map((line, i) => (
+                <div key={i} className={`${line.startsWith('>') ? 'text-[#00ff00]' : 'text-[#00ff00]/60'}`}>
+                  {line || '\u00A0'}
+                </div>
+              ))}
+              <form onSubmit={handleTerminalSubmit} className="flex items-center mt-1">
+                <span className="text-[#00ff00] mr-1">{'>'}</span>
+                <input
+                  value={terminalInput}
+                  onChange={(e) => setTerminalInput(e.target.value)}
+                  className="flex-1 bg-transparent text-[#00ff00] outline-none font-mono"
+                  autoFocus
+                />
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Dashboard 卡片 ──
+function DashCard({ icon, label, desc, onClick }: {
+  icon: React.ReactNode; label: string; desc: string; onClick: () => void;
+}) {
+  return (
+    <button
+      className="p-4 border border-[#00ff00]/20 rounded hover:bg-[#00ff00]/5 transition-colors text-left"
+      onClick={onClick}
+    >
+      <div className="mb-2">{icon}</div>
+      <div className="text-sm font-bold">{label}</div>
+      <div className="text-[10px] text-[#00ff00]/50">{desc}</div>
+    </button>
+  );
+}
+
+// ── 日志条目 ──
+function LogEntry({ date, content, highlight }: {
+  date: string; content: React.ReactNode; highlight?: boolean;
+}) {
+  return (
+    <div className={`p-3 rounded border ${highlight ? 'border-red-500/40 bg-red-900/10' : 'border-[#00ff00]/10'}`}>
+      <div className={`text-[10px] mb-1 ${highlight ? 'text-red-400' : 'text-[#00ff00]/40'}`}>
+        [{date}]
+      </div>
+      <div className={highlight ? 'text-red-300/80' : 'text-[#00ff00]/70'}>
+        {content}
       </div>
     </div>
   );

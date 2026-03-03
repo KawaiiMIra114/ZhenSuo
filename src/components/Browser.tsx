@@ -1,83 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useGame } from '../GameContext';
-import { X, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
+import { TransitionOverlay } from './TransitionOverlay';
+import { Globe, ArrowLeft, ArrowRight, RotateCcw, Lock } from 'lucide-react';
+
+// ═══════════════════════════════════════════
+//  Browser · V3 内嵌浏览器容器
+//  管理地址栏 + 跨域遮罩动画
+// ═══════════════════════════════════════════
 
 interface BrowserProps {
-  children: React.ReactNode;
   title: string;
   defaultUrl: string;
+  children: React.ReactNode;
 }
 
-export function Browser({ children, title, defaultUrl }: BrowserProps) {
-  const { setCurrentApp } = useGame();
-  const [inputUrl, setInputUrl] = useState(defaultUrl);
+export function Browser({ title, defaultUrl, children }: BrowserProps) {
+  const { setCurrentApp, currentApp } = useGame();
+  const [url, setUrl] = useState(defaultUrl);
+  const [showTransition, setShowTransition] = useState(false);
 
-  useEffect(() => {
-    setInputUrl(defaultUrl);
-  }, [defaultUrl]);
+  // 判断是否为"黑区"（OA 系统）
+  const isDarkZone = currentApp === 'oa';
 
-  const handleNavigate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const url = inputUrl.toLowerCase().trim();
-    
-    if (url.includes('oa.tranquil-sleep.com')) {
-      setCurrentApp('oa');
-    } else if (url.includes('bbs.tranquil-sleep.com')) {
-      setCurrentApp('forum');
-    } else if (url.includes('www.tranquil-sleep.com') || url.includes('tranquil-sleep.com')) {
-      setCurrentApp('clinic');
-    } else {
-      alert('无法访问该网站。DNS解析失败或页面不存在。');
-      setInputUrl(defaultUrl); // reset
+  const handleNavigation = (targetUrl: string) => {
+    // 跨域跳转动画
+    if (targetUrl.includes('oa.') && !isDarkZone) {
+      setShowTransition(true);
     }
+
+    // 解析 URL → 跳转到对应页面
+    if (targetUrl.includes('tranquil-sleep.com') && !targetUrl.includes('bbs.') && !targetUrl.includes('oa.')) {
+      setCurrentApp('clinic');
+    } else if (targetUrl.includes('bbs.')) {
+      setCurrentApp('forum');
+    } else if (targetUrl.includes('oa.')) {
+      setCurrentApp('oa');
+    }
+    setUrl(targetUrl);
+  };
+
+  const handleUrlSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleNavigation(url);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 p-4 sm:p-8 z-40 flex flex-col animate-modal">
-      <div className="flex-1 bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col border border-zinc-700">
-        
-        {/* Browser Chrome (Address Bar) */}
-        <div className="h-12 bg-zinc-200 border-b border-zinc-300 flex items-center px-4 gap-4 select-none">
-          {/* Window Controls */}
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setCurrentApp('desktop')} 
-              className="w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center group transition-colors"
-              title="关闭浏览器"
-            >
-              <X className="w-2.5 h-2.5 text-red-900 opacity-0 group-hover:opacity-100" />
-            </button>
-            <div className="w-3.5 h-3.5 rounded-full bg-yellow-500"></div>
-            <div className="w-3.5 h-3.5 rounded-full bg-green-500"></div>
-          </div>
-          
-          {/* Navigation Buttons */}
-          <div className="flex gap-2 text-zinc-500">
-            <ChevronLeft className="w-5 h-5 cursor-not-allowed opacity-50" />
-            <ChevronRight className="w-5 h-5 cursor-not-allowed opacity-50" />
-            <RotateCw className="w-4 h-4 ml-2 mt-0.5 cursor-pointer hover:text-zinc-800 transition-colors" />
-          </div>
-          
-          {/* Address Bar */}
-          <form onSubmit={handleNavigate} className="flex-1 flex">
-            <input 
-              type="text" 
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              className="flex-1 bg-white border border-zinc-300 rounded px-3 py-1 text-sm text-zinc-600 font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-inner"
-            />
-          </form>
-          
-          {/* Spacer for balance */}
-          <div className="w-16"></div>
+    <div className="fixed inset-0 bg-zinc-900 flex flex-col">
+      {/* 浏览器标题栏 */}
+      <div className="h-9 bg-zinc-800 border-b border-zinc-700 flex items-center px-3 gap-3 shrink-0">
+        <div className="flex gap-1.5">
+          <button onClick={() => setCurrentApp('desktop')} className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600" />
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          <div className="w-3 h-3 rounded-full bg-green-500" />
         </div>
-
-        {/* Browser Content */}
-        <div className="flex-1 overflow-y-auto relative bg-[#f4f7f6]">
-          {children}
-        </div>
-
+        <span className="text-zinc-400 text-xs truncate">{title}</span>
       </div>
+
+      {/* 地址栏 */}
+      <div className="h-10 bg-zinc-850 border-b border-zinc-700 flex items-center px-3 gap-2 bg-zinc-800/80 shrink-0">
+        <div className="flex gap-1">
+          <button className="p-1 rounded hover:bg-zinc-700 text-zinc-500">
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+          <button className="p-1 rounded hover:bg-zinc-700 text-zinc-500">
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <button className="p-1 rounded hover:bg-zinc-700 text-zinc-500">
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleUrlSubmit} className="flex-1 flex items-center">
+          <div className="flex-1 flex items-center bg-zinc-700/60 rounded-full px-3 py-1 gap-2">
+            {isDarkZone ? (
+              <Lock className="w-3 h-3 text-yellow-500" />
+            ) : (
+              <Globe className="w-3 h-3 text-zinc-400" />
+            )}
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="flex-1 bg-transparent text-zinc-300 text-xs outline-none font-mono"
+            />
+          </div>
+        </form>
+      </div>
+
+      {/* 页面内容 */}
+      <div className="flex-1 overflow-y-auto relative">
+        {children}
+
+        {/* CRT 扫描线叠层（黑区专用） */}
+        {isDarkZone && <div className="crt-overlay" />}
+      </div>
+
+      {/* 跨域遮罩动画 */}
+      <TransitionOverlay
+        active={showTransition}
+        type="noise"
+        duration={800}
+        onComplete={() => setShowTransition(false)}
+      />
     </div>
   );
 }

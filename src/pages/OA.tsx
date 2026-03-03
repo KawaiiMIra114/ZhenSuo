@@ -296,7 +296,7 @@ export function OA() {
             </div>
             <InvestigateNode hookId="oa_photo_talisman" runeId="RUNE_01" feedbackText="照片上的符纸……右下角有一段代码注释。function_key = 'JiuKu'">
               <div className="bg-black rounded-lg overflow-hidden border border-[#00ff00]/20">
-                <img src="/images/server_talisman.png" alt="7号柜符纸" className="w-full" />
+                <img src={`${import.meta.env.BASE_URL}images/server_talisman.png`} alt="7号柜符纸" className="w-full" />
                 <div className="p-3 text-[10px] text-[#00ff00]/60 space-y-1">
                   <p>拍摄时间：2024-03-09 02:34 AM</p>
                   <p>位置：B2层 7号液冷机柜 内侧面板</p>

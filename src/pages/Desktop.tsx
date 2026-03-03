@@ -187,7 +187,7 @@ export function Desktop() {
   return (
     <div
       className="fixed inset-0 bg-cover bg-center select-none"
-      style={{ backgroundImage: 'url(/images/desktop_wallpaper.png)' }}
+      style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/desktop_wallpaper.png)` }}
       onClick={() => startMenuOpen && setStartMenuOpen(false)}
     >
       {/* 桌面图标区 */}
@@ -453,7 +453,7 @@ function MedicalRecord() {
           </div>
           {/* 背面 */}
           <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-lg overflow-hidden">
-            <img src="/images/outpatient_scan.png" alt="门诊单背面" className="w-full h-full object-cover" />
+            <img src={`${import.meta.env.BASE_URL}images/outpatient_scan.png`} alt="门诊单背面" className="w-full h-full object-cover" />
             <div className="absolute bottom-2 right-3 text-red-600 font-mono text-xs font-bold">
               LX-044-YIN
             </div>

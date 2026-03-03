@@ -128,7 +128,7 @@ export function Clinic() {
           <p>因个人职业发展规划调整，赵启同志已于<strong>2024年3月13日</strong>正式办理离职手续。</p>
           <div className="bg-gray-100 rounded-lg p-4 my-4">
             <InvestigateNode hookId="news_oa_url" feedbackText="照片背景的电脑屏幕上……似乎有一个网址。oa.tranquil-sleep.com">
-              <img src="/images/zhaoqi_departure.png" alt="赵启离职照" className="w-full rounded" />
+              <img src={`${import.meta.env.BASE_URL}images/zhaoqi_departure.png`} alt="赵启离职照" className="w-full rounded" />
               <p className="text-xs text-gray-500 mt-2 text-center">▲ 赵启同志在办理离职手续（人事部门留影）</p>
             </InvestigateNode>
           </div>
@@ -259,7 +259,7 @@ export function Clinic() {
                 onMouseEnter={handleLogoEnter}
                 onMouseLeave={handleLogoLeave}
               >
-                <img src="/images/clinic_logo.png" alt="LOGO" className="h-10 w-10 object-contain" />
+                <img src={`${import.meta.env.BASE_URL}images/clinic_logo.png`} alt="LOGO" className="h-10 w-10 object-contain" />
               </div>
             </InvestigateNode>
             <div>
@@ -315,9 +315,9 @@ export function Clinic() {
               <h3 className="text-lg font-bold text-gray-800 mb-4">💬 康复者心声</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { name: '王丽芬', img: '/images/patient_1.png', text: '在安宁诊所治疗两个月后，困扰我十年的失眠终于好了！', date: '2023-11' },
-                  { name: '张海明', img: '/images/patient_2.png', text: '非常专业的医疗团队，DNR疗法效果显著。', date: '2023-12' },
-                  { name: '陈国良', img: '/images/patient_3.png', text: '感谢林主任团队，让我重新找到了安稳的睡眠。', date: '2024-01' },
+                  { name: '王丽芬', img: `${import.meta.env.BASE_URL}images/patient_1.png`, text: '在安宁诊所治疗两个月后，困扰我十年的失眠终于好了！', date: '2023-11' },
+                  { name: '张海明', img: `${import.meta.env.BASE_URL}images/patient_2.png`, text: '非常专业的医疗团队，DNR疗法效果显著。', date: '2023-12' },
+                  { name: '陈国良', img: `${import.meta.env.BASE_URL}images/patient_3.png`, text: '感谢林主任团队，让我重新找到了安稳的睡眠。', date: '2024-01' },
                 ].map(p => (
                   <div key={p.name} className="bg-white rounded-lg shadow p-4">
                     <img src={p.img} alt={p.name} className="w-full h-40 object-cover rounded mb-3" />

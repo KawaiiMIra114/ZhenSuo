@@ -21,4 +21,5 @@ export interface GameContextType {
   markAsRead: () => void;
   endingType: EndingType;
   setEndingType: (type: EndingType) => void;
+  resetGame: () => void;
 }

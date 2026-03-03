@@ -12,7 +12,7 @@ interface NarrativeSegment {
 const SEGMENTS: NarrativeSegment[] = [
     {
         lines: [
-            '2024年6月2日',
+            '2024年3月14日',
             '凌晨 3:47',
             '',
             '窗外的雨已经下了三天。',
@@ -27,7 +27,7 @@ const SEGMENTS: NarrativeSegment[] = [
             '',
             '一封未知来源的邮件。',
             '发件人：z***@tranquil-sleep.com',
-            '发送时间：2024年6月1日 03:14（定时发送）',
+            '发送时间：2024年3月14日 03:14（定时发送）',
         ],
         pause: 2200,
         effect: 'flicker',

@@ -15,31 +15,51 @@ body {
 .perspective-1000 {
   perspective: 1000px;
 }
+
 .preserve-3d {
   transform-style: preserve-3d;
 }
+
 .backface-hidden {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
+
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
 
 /* Animations */
 @keyframes modal-enter {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
+
 .animate-modal {
   animation: modal-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
@@ -63,9 +83,11 @@ body {
 .clinic-table {
   @apply w-full border-collapse border border-[#cccccc] bg-white text-sm;
 }
+
 .clinic-table th {
   @apply border border-[#cccccc] bg-[#e9ecef] px-4 py-2 text-left font-bold text-[#495057];
 }
+
 .clinic-table td {
   @apply border border-[#cccccc] px-4 py-2 text-[#212529];
 }
@@ -74,23 +96,131 @@ body {
 .terminal-mode {
   @apply bg-black text-[#00ff00] font-mono;
 }
+
 .terminal-mode ::selection {
   @apply bg-[#00ff00] text-black;
 }
+
 .terminal-mode input {
   @apply bg-black text-[#00ff00] border border-[#00ff00] focus:outline-none focus:ring-1 focus:ring-[#00ff00] placeholder:text-[#005500];
 }
+
 .terminal-mode button {
   @apply bg-black text-[#00ff00] border border-[#00ff00] hover:bg-[#00ff00] hover:text-black transition-colors;
 }
 
 /* Glitch effect for terminal */
 @keyframes terminal-glitch {
-  0% { text-shadow: 1px 0 0 red, -1px 0 0 blue; }
-  5% { text-shadow: -1px 0 0 red, 1px 0 0 blue; }
-  10% { text-shadow: 0 0 0 transparent; }
-  100% { text-shadow: 0 0 0 transparent; }
+  0% {
+    text-shadow: 1px 0 0 red, -1px 0 0 blue;
+  }
+
+  5% {
+    text-shadow: -1px 0 0 red, 1px 0 0 blue;
+  }
+
+  10% {
+    text-shadow: 0 0 0 transparent;
+  }
+
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
 }
+
 .terminal-glitch {
   animation: terminal-glitch 3s infinite;
+}
+
+/* ===== Prologue Animations ===== */
+@keyframes typewriter-cursor-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-typewriter-cursor {
+  animation: typewriter-cursor-blink 0.8s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+@keyframes text-flicker {
+
+  0%,
+  92%,
+  100% {
+    opacity: 1;
+  }
+
+  93% {
+    opacity: 0.3;
+  }
+
+  95% {
+    opacity: 0.9;
+  }
+
+  97% {
+    opacity: 0.4;
+  }
+}
+
+.animate-text-flicker {
+  animation: text-flicker 4s ease-in-out infinite;
+}
+
+/* ===== Desktop OS Animations ===== */
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

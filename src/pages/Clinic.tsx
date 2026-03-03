@@ -52,12 +52,12 @@ export function Clinic() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return;
 
-    const results = newsData.filter(news => 
-      news.title.includes(q) || 
-      news.content.includes(q) || 
+    const results = newsData.filter(news =>
+      news.title.includes(q) ||
+      news.content.includes(q) ||
       news.keywords.some(k => k.includes(q))
     );
-    
+
     setSearchResults(results);
     setHasSearched(true);
 
@@ -111,7 +111,7 @@ export function Clinic() {
             <div className="w-12 h-12 text-[#0056b3] flex items-center justify-center text-4xl font-serif relative group cursor-pointer">
               ∞
               {/* Fragment 1: Hidden in logo hover */}
-              <div 
+              <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs text-amber-600 bg-white/80 transition-opacity"
                 onClick={(e) => { e.stopPropagation(); addFragment(1); alert('你发现了一枚古铜色的符文碎片。'); }}
               >
@@ -142,9 +142,8 @@ export function Clinic() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className={`px-8 py-4 text-sm font-bold transition-colors ${
-                activeTab === item.id ? 'bg-[#003d82]' : 'hover:bg-[#004494]'
-              }`}
+              className={`px-8 py-4 text-sm font-bold transition-colors ${activeTab === item.id ? 'bg-[#003d82]' : 'hover:bg-[#004494]'
+                }`}
             >
               {item.label}
             </button>
@@ -154,14 +153,51 @@ export function Clinic() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-6 py-12 min-h-[600px]">
-        
+
         {activeTab === 'home' && (
           <div className="space-y-12 animate-in fade-in">
+            {/* Hero Section */}
             <div className="bg-white p-12 shadow-sm border border-[#e0e0e0] text-center space-y-6">
               <h2 className="text-3xl font-bold text-[#003d82]">为您找回失去的安宁</h2>
               <p className="text-lg text-[#666666] max-w-3xl mx-auto leading-relaxed">
                 通过第三代深度神经共振（DNR）疗法，实现对大脑神经网络的深度刺激，使您的精神与肉体实现暂时的完美剥离，从而达到毫无杂念的沉浸式深眠体验。
               </p>
+            </div>
+
+            {/* Testimonials */}
+            <div>
+              <h3 className="text-center font-bold text-xl text-[#003d82] mb-8 relative inline-block left-1/2 -translate-x-1/2">
+                <span className="bg-[#f4f7f6] px-4 relative z-10">康复者反馈</span>
+                <span className="absolute top-1/2 left-[-50px] right-[-50px] h-[1px] bg-[#cccccc] z-0"></span>
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
+                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
+                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
+                    自从接受了DNR疗法，我那些烦人的多余情绪全都不见了。现在我的大脑像一张白纸一样干净，每天都能完美执行经理交给我的任务。工作效率提升了300%！
+                  </p>
+                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 某科技公司程序员 王先生</div>
+                </div>
+
+                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
+                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
+                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
+                    失眠折磨了我十年，昨晚在这里的一小时治疗，让我体验到了前所未有的深度沉浸。醒来后我不再感到难过，甚至忘记了为什么我刚开始会觉得难过。太神奇了。
+                  </p>
+                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 自由撰稿人 李女士</div>
+                </div>
+
+                <div className="bg-white p-6 shadow-sm border border-[#e0e0e0] relative">
+                  <div className="absolute -top-3 left-4 text-5xl text-[#0056b3] opacity-20 font-serif">"</div>
+                  <p className="text-sm text-[#444] italic mb-4 leading-relaxed mt-2 pt-2 relative z-10">
+                    <span className="text-gray-700">医生非常专业，环境也很好。只是我有时候会觉得</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-gray-700 to-gray-200">自己变得不太像自己了，有些记忆像是别人的</span>
+                    <span className="text-gray-700">。总而言之是一次很棒的体验！强烈推荐给所有压力大的朋友们！</span>
+                  </p>
+                  <div className="text-right text-xs font-bold text-[#0056b3] mt-auto">- 待业青年 张某</div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -173,8 +209,8 @@ export function Clinic() {
               <div className="bg-white p-6 shadow-sm border border-[#e0e0e0]">
                 <h3 className="font-bold text-lg mb-4 border-l-4 border-[#0056b3] pl-3">新闻检索</h3>
                 <form onSubmit={handleNewsSearch} className="space-y-4">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="输入关键词..."
@@ -200,16 +236,16 @@ export function Clinic() {
               ) : (
                 <div className="space-y-8">
                   {searchResults.map((news, index) => (
-                    <div 
-                      key={news.id} 
+                    <div
+                      key={news.id}
                       className="border-b border-[#eeeeee] pb-8 last:border-0 animate-in fade-in slide-in-from-bottom-4"
                       style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
                     >
                       <h3 className="text-xl font-bold text-[#003d82] mb-2">{news.title}</h3>
                       <p className="text-sm text-[#999999] mb-4 font-mono">{news.date}</p>
-                      
+
                       {news.image === 'zhaoqi' && (
-                        <div 
+                        <div
                           className="w-full h-48 bg-zinc-200 mb-4 flex flex-col items-center justify-center cursor-crosshair relative group border border-zinc-300 overflow-hidden"
                           onClick={handleZhaoQiImageClick}
                         >
@@ -224,13 +260,18 @@ export function Clinic() {
                       )}
 
                       <p className="text-[#444444] leading-relaxed">
-                        {/* 简单的高亮处理，实际中可以用更复杂的正则 */}
-                        {news.content.split('机房').map((part, i, arr) => (
-                          <React.Fragment key={i}>
-                            {part}
-                            {i < arr.length - 1 && <strong className="text-black bg-yellow-100">机房</strong>}
-                          </React.Fragment>
-                        ))}
+                        {/* 动态关键词高亮 */}
+                        {searchQuery.trim() ? (
+                          news.content.split(new RegExp(`(${searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')).map((part, i) => (
+                            <React.Fragment key={i}>
+                              {part.toLowerCase() === searchQuery.trim().toLowerCase()
+                                ? <strong className="text-black bg-yellow-100">{part}</strong>
+                                : part}
+                            </React.Fragment>
+                          ))
+                        ) : (
+                          news.content
+                        )}
                       </p>
                     </div>
                   ))}
@@ -246,8 +287,8 @@ export function Clinic() {
             <form onSubmit={handleAppointmentSearch} className="space-y-6">
               <div>
                 <label className="block text-sm font-bold text-[#666666] mb-2">请输入门诊挂号条码：</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={appointmentQuery}
                   onChange={(e) => setAppointmentQuery(e.target.value)}
                   placeholder="例如：LX-001-XXX"
@@ -269,11 +310,22 @@ export function Clinic() {
 
         {activeTab === 'doctors' && (
           <div className="animate-in fade-in max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-[#003d82] mb-6 border-b pb-4">专家专栏 - 林医生</h2>
+            {/* Team Intro */}
+            <div className="bg-white shadow-sm border border-[#e0e0e0] p-6 mb-8 text-sm text-[#444]">
+              <h3 className="font-bold text-lg text-[#003d82] mb-4 border-l-4 border-[#0056b3] pl-2">专家团队简介</h3>
+              <p className="leading-relaxed mb-3">
+                安宁深眠诊所拥有一支由顶尖神经科学家、精神卫生专家和网络数据分析师组成的交叉学科团队。我们不仅精通传统的心理疏导，更深入涉猎了意识阻断与潜意识格式化领域。
+              </p>
+              <p className="leading-relaxed">
+                在“伊甸园计划”取得突破性进展后，我们成功地将不良记忆与多余情绪的剥离成功率提升至99.9%。不要让过去的创伤成为未来的阻碍——在这里，我们帮您<span className="italic">删除负担，重塑新生</span>。
+              </p>
+            </div>
+
+            <h2 className="text-2xl font-bold text-[#003d82] mb-6 border-b pb-4">前沿专栏 - 林医生</h2>
             <div className="bg-blue-50 border border-blue-200 p-4 mb-8 text-sm text-[#666666]">
               <p><strong>林医生简介：</strong> 我院前神经共振科实习医生，擅长通过生活方式干预改善睡眠质量。她曾在此开设专栏，分享了许多实用的睡眠科普知识。</p>
             </div>
-            
+
             <div className="space-y-6">
               {doctorArticles.map((article, index) => (
                 <div key={article.id} className="bg-white p-6 shadow-sm border border-[#e0e0e0] hover:shadow-md transition-shadow">
@@ -286,7 +338,7 @@ export function Clinic() {
                     {article.excerpt}
                     {/* Fragment 6 hidden in the period of the last article */}
                     {index === 5 && (
-                      <span 
+                      <span
                         className="cursor-pointer hover:text-amber-600 font-bold transition-colors"
                         onClick={() => {
                           addFragment(6);
@@ -300,9 +352,9 @@ export function Clinic() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-8 text-center">
-              <button 
+              <button
                 onClick={() => {
                   addClue({
                     id: 'taiyi',
@@ -324,7 +376,7 @@ export function Clinic() {
       {showImageModal && (
         <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 animate-in fade-in" onClick={() => setShowImageModal(false)}>
           <div className="relative max-w-4xl w-full bg-zinc-900 border border-zinc-700 p-2 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <button 
+            <button
               onClick={() => setShowImageModal(false)}
               className="absolute -top-10 right-0 text-white hover:text-red-400 transition-colors"
             >
@@ -334,16 +386,16 @@ export function Clinic() {
               {/* Simulated blurry photo background */}
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 mix-blend-overlay"></div>
               <div className="absolute inset-0 bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-700"></div>
-              
+
               {/* The "Screen" in the background */}
               <div className="absolute right-1/4 top-1/4 w-64 h-48 bg-black border-8 border-zinc-900 rounded-sm transform rotate-12 skew-x-12 shadow-[0_0_50px_rgba(0,255,0,0.1)] flex items-start p-2">
                 <div className="w-full h-full border border-green-900/30 relative overflow-hidden">
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
                   <div className="text-green-500 font-mono text-[10px] opacity-80 break-all leading-tight blur-[0.5px]">
                     <span className="text-white bg-green-900/50 px-1">https://oa.tranquil-sleep.com/login</span>
-                    <br/><br/>
-                    &gt; SYSTEM BOOT...<br/>
-                    &gt; CHECKING PROTOCOLS...<br/>
+                    <br /><br />
+                    &gt; SYSTEM BOOT...<br />
+                    &gt; CHECKING PROTOCOLS...<br />
                     &gt; AWAITING CREDENTIALS...
                   </div>
                 </div>
@@ -363,8 +415,8 @@ export function Clinic() {
       {/* Footer */}
       <footer className="bg-[#333333] text-[#999999] py-8 text-center text-sm">
         <p>
-          © 2024 安宁深眠诊所 版权所有 
-          <span 
+          © 2024 安宁深眠诊所 版权所有
+          <span
             className="cursor-pointer hover:text-amber-600 ml-1"
             onClick={() => { addFragment(2); alert('你在版权声明处发现了一枚古铜色的符文碎片。'); }}
           >

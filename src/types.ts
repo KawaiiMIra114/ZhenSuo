@@ -1,18 +1,4 @@
-// ═══════════════════════════════════════════
-//  ZhenSuo V3 · 全局类型定义
-// ═══════════════════════════════════════════
-
-export type AppState =
-  | 'warning'    // 内容警告
-  | 'prologue'   // 序章
-  | 'desktop'    // 桌面视窗
-  | 'clinic'     // 白区·官网
-  | 'forum'      // 灰区·论坛
-  | 'oa'         // 黑区·OA系统
-  | 'terminal'   // 终端
-  | 'ending'     // 结局
-  | 'shutdown';  // 关机惩罚序列
-
+export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending';
 export type EndingType = 'A' | 'B' | 'C' | null;
 
 // 游戏进度四阶段制（V3 §二）
@@ -53,12 +39,8 @@ export interface GameContextType {
   // 导航
   currentApp: AppState;
   setCurrentApp: (app: AppState) => void;
-
-  // 模式
   gentleMode: boolean;
   setGentleMode: (mode: boolean) => void;
-
-  // 线索系统
   clues: Clue[];
   addClue: (clue: Clue) => void;
   hasClue: (id: string) => boolean;
@@ -88,9 +70,5 @@ export interface GameContextType {
   // 结局系统
   endingType: EndingType;
   setEndingType: (type: EndingType) => void;
-  completedEndings: string[];
-  completeEnding: (endingId: string) => void;
-
-  // 重置
   resetGame: () => void;
 }

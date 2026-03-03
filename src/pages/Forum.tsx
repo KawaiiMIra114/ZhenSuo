@@ -37,6 +37,9 @@ export function Forum() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [expandedB3, setExpandedB3] = useState(false);
+  const [b3Unlocked, setB3Unlocked] = useState(false);
+  const [attemptPwd, setAttemptPwd] = useState('');
+  const [pwdError, setPwdError] = useState('');
 
   // ── 帖子数据 (V3 §B-1 ~ B-3) ──
   const posts: ForumPost[] = [
@@ -136,12 +139,19 @@ export function Forum() {
             <p className="text-gray-400">B2层不是什么"治疗室"。那些所谓的"液冷机柜"里面——</p>
             <p className="text-red-400/80 font-bold">装的不是服务器。是人。</p>
             <p className="text-gray-500">每个舱体里都有一个人，身上插满了管子和传感器。他们还活着，但已经不是"活着"了。</p>
-            <p className="text-gray-500">如果你解码他们实时上传的EEG数据包，你会发现那些波形不是脑电波——</p>
-            <p className="text-gray-500">那是<strong className="text-amber-400">哭声</strong>。</p>
+            <p className="text-gray-500">如果你解码他们实时上传的EEG数据包，你会发现那些波形不是脑电波——那是<strong className="text-amber-400">哭声</strong>。</p>
             <p className="text-red-500/40 font-mono text-xs mt-4">
               [原帖作者 IP: 10.0.77.*** | 内网发布]<br />
               [管理员操作日志: 删帖+封禁+IP溯源 | 耗时: 5分钟]
             </p>
+            <hr className="border-red-900/50 my-4" />
+            <div className="bg-zinc-950/80 p-3 rounded font-mono text-xs text-green-500/80">
+              <p>{'>> SYSTEM OVERRIDE: ZK-0077 APPENDED <<'}</p>
+              <p>如果你解开了这个锁定，说明你已经注意到了。</p>
+              <p>不要去B2层。如果你想知道真相，到内网来找我。这才是真正的入口：</p>
+              <p className="text-green-400 font-bold mt-2 hover:underline select-all">oa.tranquil-sleep.com</p>
+              <p className="mt-2 text-green-600">账号就是那个被频繁提起的前台经理工号。密码你既然进得来，说明你早已知晓。</p>
+            </div>
           </div>
         </InvestigateNode>
       ),
@@ -270,11 +280,40 @@ export function Forum() {
                   <span>{currentPost.time}</span>
                   <span>浏览 {currentPost.views}</span>
                 </div>
-                {currentPost.content}
+                {currentPost.id === 'b3' && !b3Unlocked ? (
+                  <div className="p-8 text-center flex flex-col items-center justify-center bg-red-950/20 border border-red-900/40 rounded-lg my-4">
+                    <Lock className="w-12 h-12 text-red-500/60 mb-4" />
+                    <h3 className="text-xl font-bold text-red-400 mb-2">安全协议触发：防泄密锁定</h3>
+                    <p className="text-sm text-red-400/80 mb-6 max-w-md">本帖已被论坛管理系统冻结。继续访问可能需要拥有特殊人员的安全口令。</p>
+                    <form className="flex flex-col gap-3 w-64" onSubmit={e => {
+                      e.preventDefault();
+                      if (attemptPwd.trim().toLowerCase() === 'fswltz') {
+                        setB3Unlocked(true);
+                        setPwdError('');
+                      } else {
+                        setPwdError('口令错误，访问被拒绝。');
+                      }
+                    }}>
+                      <input
+                        type="text"
+                        placeholder="输入安全口令..."
+                        value={attemptPwd}
+                        onChange={e => setAttemptPwd(e.target.value)}
+                        className="px-4 py-2 bg-zinc-900 border border-red-900/50 rounded text-center text-red-200 outline-none focus:border-red-500 font-mono uppercase"
+                      />
+                      <button type="submit" className="w-full py-2 bg-red-900/40 hover:bg-red-800/60 text-red-300 font-bold rounded transition-colors text-sm border border-red-900/50">
+                        解密档案
+                      </button>
+                      {pwdError && <p className="text-red-500 text-xs mt-1 font-mono">{pwdError}</p>}
+                    </form>
+                  </div>
+                ) : (
+                  currentPost.content
+                )}
               </div>
 
               {/* 回复列表 */}
-              {currentPost.replyList.length > 0 && (
+              {currentPost.replyList.length > 0 && !(currentPost.id === 'b3' && !b3Unlocked) && (
                 <div className="divide-y divide-[#2a2a4a]">
                   {currentPost.replyList.map((reply, idx) => (
                     <div key={idx} className={`p-4 ${reply.isMod ? 'bg-yellow-900/10' : ''} ${reply.isDeleted ? 'opacity-60' : ''}`}>

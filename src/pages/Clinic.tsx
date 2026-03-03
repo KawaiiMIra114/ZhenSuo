@@ -221,23 +221,20 @@ export function Clinic() {
     },
     {
       id: 'col_d4',
-      title: '苦役阈值：持续性深度镇静的神经代谢风险',
+      title: '关于过度镇静反应与机能代偿的追踪研究',
       author: '林德坤 主任医师',
       date: '2024-03-01',
-      summary: '长期深度镇静状态下，大脑的能量代谢模式将发生不可逆变化……',
+      summary: '长期深度镇静状态下，大脑的代谢模式是否会引发共振算力……',
       content: (
         <div className="space-y-3 text-sm leading-relaxed text-gray-700">
           <p className="italic text-gray-500">——林德坤 | 安宁深眠诊所 DNR研究组</p>
-          <p>当患者处于持续超过72小时的深度镇静状态时，其大脑前额叶皮层的葡萄糖代谢率会显著下降至基线水平的23%以下——这一现象被我们内部称为"苦役阈值"。</p>
-          <p>跨越苦役阈值后，患者的海马体开始呈现类似于退行性病变的影像学特征。更令人不安的是，其EEG读数与仪器后台记录的"共振哈希值"之间，存在着某种我们目前无法解释的数学相关性……</p>
-          <p className="font-bold text-gray-900 mt-4">
-            <span className="text-red-700">太</span>多的事情，已经超出了一个医生能独自承担的范围。<br />
-            <span className="text-red-700">乙</span>等密级的内部文件里，藏着我放不下的东西。<br />
-            <span className="text-red-700">救</span>赎，或许从来就不在任何一本教科书里。<br />
-            <span className="text-red-700">苦</span>海无涯，而我已是其中的一叶扁舟。
-          </p>
-          <p className="text-xs text-gray-400 mt-4">
-            ——未完成草稿，自动保存于 2024-03-01 03:47 AM
+          <p>观察表明，当患者跨越72小时的持续性镇静窗口后，其前额叶皮层并未陷入预期的静息状态，反而展现出异常的电脉冲规律。</p>
+          <p>通过对比分析系统底层协议生成的哈希校验，我惊讶地发现：<strong className="bg-yellow-200 text-amber-900 px-1 py-0.5 rounded">人脑的神经代谢正在作为某种外部矩阵的并行算力节点被消耗</strong>。</p>
+          <p>更令人不安的是，系统日志中关于这一异常代偿反馈的故障码，无一例外地指向了同一个超级权限指令集。一旦该协议被唤醒，患者的海马体功能将遭受不可逆的过载烧毁。</p>
+          <p className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 font-mono text-xs">
+            // 本地未同步草稿备忘：<br />
+            必须找到终止该协议的方法。根据从赵启那里截获的碎片，超级权限的终端否决口令似乎与信仰有关。它的指令缩写是：<br />
+            <span className="font-bold tracking-widest mt-2 block opacity-80 select-all">TAIYIJIUKU</span>
           </p>
         </div>
       ),

@@ -15,7 +15,7 @@ interface BrowserProps {
 }
 
 export function Browser({ title, defaultUrl, children }: BrowserProps) {
-  const { setCurrentApp, currentApp } = useGame();
+  const { currentApp } = useGame();
   const [url, setUrl] = useState(defaultUrl);
   const [showTransition, setShowTransition] = useState(false);
 
@@ -30,11 +30,11 @@ export function Browser({ title, defaultUrl, children }: BrowserProps) {
 
     // 解析 URL → 跳转到对应页面
     if (targetUrl.includes('tranquil-sleep.com') && !targetUrl.includes('bbs.') && !targetUrl.includes('oa.')) {
-      setCurrentApp('clinic');
+      window.dispatchEvent(new CustomEvent('desktop-browser-nav', { detail: 'clinic' }));
     } else if (targetUrl.includes('bbs.')) {
-      setCurrentApp('forum');
+      window.dispatchEvent(new CustomEvent('desktop-browser-nav', { detail: 'forum' }));
     } else if (targetUrl.includes('oa.')) {
-      setCurrentApp('oa');
+      window.dispatchEvent(new CustomEvent('desktop-browser-nav', { detail: 'oa' }));
     }
     setUrl(targetUrl);
   };
@@ -45,17 +45,7 @@ export function Browser({ title, defaultUrl, children }: BrowserProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-900 flex flex-col">
-      {/* 浏览器标题栏 */}
-      <div className="h-9 bg-zinc-800 border-b border-zinc-700 flex items-center px-3 gap-3 shrink-0">
-        <div className="flex gap-1.5">
-          <button onClick={() => setCurrentApp('desktop')} className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600" />
-          <div className="w-3 h-3 rounded-full bg-yellow-500" />
-          <div className="w-3 h-3 rounded-full bg-green-500" />
-        </div>
-        <span className="text-zinc-400 text-xs truncate">{title}</span>
-      </div>
-
+    <div className="w-full h-full bg-zinc-900 flex flex-col overflow-hidden relative">
       {/* 地址栏 */}
       <div className="h-10 bg-zinc-850 border-b border-zinc-700 flex items-center px-3 gap-2 bg-zinc-800/80 shrink-0">
         <div className="flex gap-1">

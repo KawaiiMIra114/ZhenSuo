@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../GameContext';
 import { DraggableWindow } from '../components/DraggableWindow';
 import { InvestigateNode } from '../components/InvestigateNode';
+import { Clinic } from './Clinic';
+import { Forum } from './Forum';
+import { OA } from './OA';
 import {
   Monitor, Mail, Globe, FileText, Calendar, Power,
   ChevronUp, Clock, Wifi, Battery, Volume2,
@@ -132,9 +135,21 @@ export function Desktop() {
 
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [openWindows, setOpenWindows] = useState<string[]>([]);
+  const [browserApp, setBrowserApp] = useState<'clinic' | 'forum' | 'oa' | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // 监听浏览器内部跨域跳转
+  useEffect(() => {
+    const handleNav = (e: Event) => {
+      const customEvent = e as CustomEvent<'clinic' | 'forum' | 'oa'>;
+      setBrowserApp(customEvent.detail);
+      setOpenWindows(prev => prev.includes('browser') ? prev : [...prev, 'browser']);
+    };
+    window.addEventListener('desktop-browser-nav', handleNav);
+    return () => window.removeEventListener('desktop-browser-nav', handleNav);
+  }, []);
 
   // 时钟
   useEffect(() => {
@@ -177,7 +192,15 @@ export function Desktop() {
 
   const handleOpenBrowser = (target: 'clinic' | 'forum' | 'oa') => {
     setStartMenuOpen(false);
-    setCurrentApp(target);
+    setBrowserApp(target);
+    openWindow('browser');
+  };
+
+  const getBrowserTitle = () => {
+    if (browserApp === 'clinic') return '安宁深眠诊所 Tranquil Sleep Clinic';
+    if (browserApp === 'forum') return '安宁社区论坛';
+    if (browserApp === 'oa') return '内网系统 OA';
+    return '浏览器';
   };
 
   // 格式化时间
@@ -310,6 +333,22 @@ export function Desktop() {
         </DraggableWindow>
       )}
 
+      {/* ===== 浏览器窗口 ===== */}
+      {openWindows.includes('browser') && browserApp && (
+        <DraggableWindow
+          title={getBrowserTitle()}
+          icon={<Globe className="w-3.5 h-3.5" />}
+          onClose={() => { closeWindow('browser'); setBrowserApp(null); }}
+          width={1024}
+          height={680}
+          defaultPosition={{ x: 60, y: 50 }}
+        >
+          {browserApp === 'clinic' && <Clinic />}
+          {browserApp === 'forum' && <Forum />}
+          {browserApp === 'oa' && <OA />}
+        </DraggableWindow>
+      )}
+
       {/* ===== 任务栏 ===== */}
       <div className="absolute bottom-0 left-0 right-0 h-11 bg-zinc-900/90 backdrop-blur-md border-t border-zinc-700/50 flex items-center px-2 z-[200]">
         {/* 开始按钮 */}
@@ -328,7 +367,7 @@ export function Desktop() {
         <div className="flex-1 flex gap-1 ml-2">
           {openWindows.map(w => (
             <div key={w} className="h-7 px-3 bg-zinc-800/60 rounded flex items-center text-zinc-400 text-xs">
-              {w === 'email' ? '邮件' : w === 'record' ? '门诊单' : w === 'calendar' ? '日历' : w}
+              {w === 'email' ? '邮件' : w === 'record' ? '门诊单' : w === 'calendar' ? '日历' : w === 'browser' ? '浏览器' : w}
             </div>
           ))}
         </div>

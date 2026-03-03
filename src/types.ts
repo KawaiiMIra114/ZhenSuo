@@ -1,4 +1,4 @@
-export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending';
+export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending' | 'shutdown';
 export type EndingType = 'A' | 'B' | 'C' | null;
 
 // 游戏进度四阶段制（V3 §二）
@@ -71,4 +71,6 @@ export interface GameContextType {
   endingType: EndingType;
   setEndingType: (type: EndingType) => void;
   resetGame: () => void;
+  completedEndings: string[];
+  completeEnding: (endingId: string) => void;
 }

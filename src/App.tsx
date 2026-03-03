@@ -11,6 +11,7 @@ import { Ending } from './pages/Ending';
 import { Notebook } from './components/Notebook';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Browser } from './components/Browser';
+import { ShutdownSequence } from './components/ShutdownSequence';
 
 function GameRouter() {
   const { currentApp } = useGame();
@@ -19,6 +20,7 @@ function GameRouter() {
   if (currentApp === 'prologue') return <Prologue />;
   if (currentApp === 'terminal') return <Terminal />;
   if (currentApp === 'ending') return <Ending />;
+  if (currentApp === 'shutdown') return <ShutdownSequence />;
   if (currentApp === 'desktop') return <><Desktop /><Notebook /></>;
 
   // Browser Apps

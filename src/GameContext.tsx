@@ -5,6 +5,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [currentApp, setCurrentApp] = useState<AppState>('warning');
+  const [gentleMode, setGentleMode] = useState(false);
   const [clues, setClues] = useState<Clue[]>([]);
   const [fragments, setFragments] = useState<number[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
@@ -30,7 +31,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const markAsRead = () => setHasUnread(false);
 
   return (
-    <GameContext.Provider value={{ currentApp, setCurrentApp, clues, addClue, fragments, addFragment, hasClue, hasUnread, markAsRead, endingType, setEndingType }}>
+    <GameContext.Provider value={{ currentApp, setCurrentApp, gentleMode, setGentleMode, clues, addClue, fragments, addFragment, hasClue, hasUnread, markAsRead, endingType, setEndingType }}>
       {children}
     </GameContext.Provider>
   );

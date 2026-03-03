@@ -1,4 +1,4 @@
-export type AppState = 'warning' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending';
+export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending';
 export type EndingType = 'A' | 'B' | 'C' | null;
 
 export interface Clue {
@@ -10,6 +10,8 @@ export interface Clue {
 export interface GameContextType {
   currentApp: AppState;
   setCurrentApp: (app: AppState) => void;
+  gentleMode: boolean;
+  setGentleMode: (mode: boolean) => void;
   clues: Clue[];
   addClue: (clue: Clue) => void;
   fragments: number[];

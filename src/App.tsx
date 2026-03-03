@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameProvider, useGame } from './GameContext';
 import { Warning } from './pages/Warning';
+import { Prologue } from './pages/Prologue';
 import { Desktop } from './pages/Desktop';
 import { Clinic } from './pages/Clinic';
 import { Forum } from './pages/Forum';
@@ -15,6 +16,7 @@ function GameRouter() {
   const { currentApp } = useGame();
 
   if (currentApp === 'warning') return <Warning />;
+  if (currentApp === 'prologue') return <Prologue />;
   if (currentApp === 'terminal') return <Terminal />;
   if (currentApp === 'ending') return <Ending />;
   if (currentApp === 'desktop') return <><Desktop /><Notebook /></>;

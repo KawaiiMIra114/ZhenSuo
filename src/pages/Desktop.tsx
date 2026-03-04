@@ -44,6 +44,9 @@ const EMAILS: EmailData[] = [
 
 您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
 
+更多诊疗信息及探视指引，请访问官网：
+www.tranquil-sleep.com
+
 如有疑问，欢迎拨打我们的24小时服务热线：
 400-XXX-XXXX
 
@@ -549,10 +552,38 @@ export function Desktop() {
                       hookId={selectedEmail.hookId}
                       feedbackText={selectedEmail.feedbackText}
                     >
-                      <pre className="whitespace-pre-wrap font-sans">{selectedEmail.body}</pre>
+                      <pre className="whitespace-pre-wrap font-sans">
+                        {selectedEmail.body.split('www.tranquil-sleep.com').map((part, i, arr) => (
+                          <React.Fragment key={i}>
+                            {part}
+                            {i < arr.length - 1 && (
+                              <span
+                                className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+                                onClick={() => handleOpenBrowser('clinic')}
+                              >
+                                www.tranquil-sleep.com
+                              </span>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </pre>
                     </InvestigateNode>
                   ) : (
-                    <pre className="whitespace-pre-wrap font-sans">{selectedEmail.body}</pre>
+                    <pre className="whitespace-pre-wrap font-sans">
+                      {selectedEmail.body.split('www.tranquil-sleep.com').map((part, i, arr) => (
+                        <React.Fragment key={i}>
+                          {part}
+                          {i < arr.length - 1 && (
+                            <span
+                              className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+                              onClick={() => handleOpenBrowser('clinic')}
+                            >
+                              www.tranquil-sleep.com
+                            </span>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </pre>
                   )}
 
                   {/* 回溯邮件特殊按钮 */}

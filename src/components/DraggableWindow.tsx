@@ -16,6 +16,10 @@ interface DraggableWindowProps {
     children: React.ReactNode;
     /** 最小化时的文字 */
     className?: string;
+    /** 外部控制的最小化状态，可选 */
+    isMinimized?: boolean;
+    /** 触发最小化/还原时的回调 */
+    onMinimizeToggle?: (minimized: boolean) => void;
     /** z-index 层级 */
     zIndex?: number;
     onFocus?: () => void;
@@ -35,6 +39,8 @@ export function DraggableWindow({
     className = '',
     zIndex: initialZ,
     onFocus,
+    isMinimized: externalIsMinimized,
+    onMinimizeToggle,
 }: DraggableWindowProps) {
     const [position, setPosition] = useState(
         defaultPosition ?? {
@@ -43,7 +49,16 @@ export function DraggableWindow({
         }
     );
     const [zIndex, setZIndex] = useState(initialZ ?? ++globalZCounter);
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [internalIsMinimized, setInternalIsMinimized] = useState(false);
+
+    // 如果外部传入了 isMinimized，则优先使用外部的；否则使用内部的
+    const isMinimized = externalIsMinimized !== undefined ? externalIsMinimized : internalIsMinimized;
+
+    const handleMinimize = (val: boolean) => {
+        if (onMinimizeToggle) onMinimizeToggle(val);
+        else setInternalIsMinimized(val);
+    };
+
     const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
     const windowRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +129,7 @@ export function DraggableWindow({
                         <X className="w-2 h-2 text-red-900 opacity-0 group-hover:opacity-100" />
                     </button>
                     <button
-                        onClick={() => setIsMinimized(true)}
+                        onClick={() => handleMinimize(true)}
                         className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 flex items-center justify-center group transition-colors"
                     >
                         <Minus className="w-2 h-2 text-yellow-900 opacity-0 group-hover:opacity-100" />

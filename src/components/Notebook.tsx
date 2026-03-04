@@ -19,7 +19,7 @@ export function Notebook() {
   };
 
   return (
-    <div className={`fixed bottom-0 right-8 w-80 bg-[#f4e8d1] border-x-2 border-t-2 border-[#8b7355] rounded-t-lg shadow-[0_-5px_15px_rgba(0,0,0,0.2)] transition-transform duration-300 z-[9999] font-serif ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'}`}>
+    <div className={`fixed bottom-10 right-8 w-80 bg-[#f4e8d1] border-x-2 border-t-2 border-[#8b7355] rounded-t-lg shadow-[0_-5px_15px_rgba(0,0,0,0.2)] transition-transform duration-300 z-[9999] font-serif ${isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-48px)]'}`}>
 
       {/* Header / Tab */}
       <button

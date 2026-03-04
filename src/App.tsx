@@ -21,28 +21,10 @@ function GameRouter() {
   if (currentApp === 'terminal') return <Terminal />;
   if (currentApp === 'ending') return <Ending />;
   if (currentApp === 'shutdown') return <ShutdownSequence />;
-  if (currentApp === 'desktop') return <><Desktop /><Notebook /></>;
-
-  // Browser Apps
-  let url = 'https://www.tranquil-sleep.com';
-  let title = '安宁深眠诊所';
-  let content = <Clinic />;
-
-  if (currentApp === 'forum') {
-    url = 'https://bbs.tranquil-sleep.com';
-    title = '安宁社区 - 病友交流论坛';
-    content = <Forum />;
-  } else if (currentApp === 'oa') {
-    url = 'https://oa.tranquil-sleep.com/login';
-    title = 'TRANQUIL SLEEP CLINIC - INTRANET';
-    content = <OA />;
-  }
-
+  // 对旧版本的 oa / forum / clinic 或未知状态，合并渲染到 Desktop
   return (
     <>
-      <Browser title={title} defaultUrl={url}>
-        {content}
-      </Browser>
+      <Desktop />
       <Notebook />
     </>
   );

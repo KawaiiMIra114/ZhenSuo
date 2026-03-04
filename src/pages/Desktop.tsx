@@ -5,10 +5,12 @@ import { InvestigateNode } from '../components/InvestigateNode';
 import { Clinic } from './Clinic';
 import { Forum } from './Forum';
 import { OA } from './OA';
+import { Browser } from '../components/Browser';
 import {
   Monitor, Mail, Globe, FileText, Calendar, Power,
   ChevronUp, Clock, Wifi, Battery, Volume2,
-  Inbox, Star, AlertTriangle, X
+  Inbox, Star, AlertTriangle, X,
+  RotateCcw
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -130,11 +132,12 @@ export function Desktop() {
     currentApp, setCurrentApp,
     completedEndings, collectedRunes,
     hasReadHook, readHook, collectRune,
-    linXiaoSignalStrength,
+    linXiaoSignalStrength, resetGame
   } = useGame();
 
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [openWindows, setOpenWindows] = useState<string[]>([]);
+  const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
   const [browserApp, setBrowserApp] = useState<'clinic' | 'forum' | 'oa' | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -174,13 +177,29 @@ export function Desktop() {
   const showRollbackEmail = completedEndings.length > 0 && completedEndings.length < 3;
   const allEmails = showRollbackEmail ? [...EMAILS, ROLLBACK_EMAIL] : EMAILS;
 
+  const toggleWindowMinimize = (id: string, forceMinimize?: boolean) => {
+    setMinimizedWindows(prev => {
+      const isMin = prev.includes(id);
+      if (forceMinimize === true && !isMin) return [...prev, id];
+      if (forceMinimize === false && isMin) return prev.filter(w => w !== id);
+      if (forceMinimize === undefined) {
+        return isMin ? prev.filter(w => w !== id) : [...prev, id];
+      }
+      return prev;
+    });
+  };
+
   const openWindow = (id: string) => {
     if (!openWindows.includes(id)) {
       setOpenWindows(prev => [...prev, id]);
+    } else {
+      // 若已打开且被最小化，将其还原
+      toggleWindowMinimize(id, false);
     }
   };
   const closeWindow = (id: string) => {
     setOpenWindows(prev => prev.filter(w => w !== id));
+    setMinimizedWindows(prev => prev.filter(w => w !== id));
     if (id === 'email') setSelectedEmail(null);
     if (id === 'calendar') setShowCalendar(false);
   };
@@ -222,12 +241,6 @@ export function Desktop() {
         <DesktopIcon icon={<Monitor className="w-8 h-8" />} label="论坛" onClick={() => handleOpenBrowser('forum')} />
       </div>
 
-      {/* 碎片计数器（右上角，微弱显示） */}
-      {collectedRunes.length > 0 && (
-        <div className="absolute top-4 right-4 text-amber-700/40 font-serif text-xs">
-          ☰ {collectedRunes.length}/7
-        </div>
-      )}
 
       {/* ===== 邮件窗口 ===== */}
       {openWindows.includes('email') && (
@@ -238,6 +251,9 @@ export function Desktop() {
           width={720}
           height={500}
           defaultPosition={{ x: 200, y: 80 }}
+          zIndex={200}
+          isMinimized={minimizedWindows.includes('email')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('email', min)}
         >
           <div className="flex h-full">
             {/* 邮件列表 */}
@@ -314,6 +330,8 @@ export function Desktop() {
           width={500}
           height={420}
           defaultPosition={{ x: 350, y: 120 }}
+          isMinimized={minimizedWindows.includes('record')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('record', min)}
         >
           <MedicalRecord />
         </DraggableWindow>
@@ -328,6 +346,8 @@ export function Desktop() {
           width={360}
           height={340}
           defaultPosition={{ x: 500, y: 150 }}
+          isMinimized={minimizedWindows.includes('calendar')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('calendar', min)}
         >
           <CalendarWidget />
         </DraggableWindow>
@@ -342,10 +362,24 @@ export function Desktop() {
           width={1024}
           height={680}
           defaultPosition={{ x: 60, y: 50 }}
+          isMinimized={minimizedWindows.includes('browser')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('browser', min)}
         >
-          {browserApp === 'clinic' && <Clinic />}
-          {browserApp === 'forum' && <Forum />}
-          {browserApp === 'oa' && <OA />}
+          {browserApp === 'clinic' && (
+            <Browser title="安宁深眠诊所" defaultUrl="https://www.tranquil-sleep.com">
+              <Clinic />
+            </Browser>
+          )}
+          {browserApp === 'forum' && (
+            <Browser title="安宁社区 - 病友交流论坛" defaultUrl="https://bbs.tranquil-sleep.com">
+              <Forum />
+            </Browser>
+          )}
+          {browserApp === 'oa' && (
+            <Browser title="TRANQUIL SLEEP CLINIC - INTRANET" defaultUrl="https://oa.tranquil-sleep.com/login">
+              <OA />
+            </Browser>
+          )}
         </DraggableWindow>
       )}
 
@@ -366,7 +400,14 @@ export function Desktop() {
         {/* 打开的窗口标签 */}
         <div className="flex-1 flex gap-1 ml-2">
           {openWindows.map(w => (
-            <div key={w} className="h-7 px-3 bg-zinc-800/60 rounded flex items-center text-zinc-400 text-xs">
+            <div
+              key={w}
+              className={`h-7 px-3 rounded flex items-center text-xs cursor-pointer select-none transition-colors border
+                ${minimizedWindows.includes(w)
+                  ? 'bg-zinc-800/40 text-zinc-500 border-zinc-700/30 hover:bg-zinc-700/50'
+                  : 'bg-zinc-800/80 text-zinc-200 border-zinc-600/50 shadow-inner'}`}
+              onClick={() => toggleWindowMinimize(w)}
+            >
               {w === 'email' ? '邮件' : w === 'record' ? '门诊单' : w === 'calendar' ? '日历' : w === 'browser' ? '浏览器' : w}
             </div>
           ))}
@@ -399,6 +440,15 @@ export function Desktop() {
             <MenuItem icon={<Calendar className="w-4 h-4" />} label="日历" onClick={() => { openWindow('calendar'); setShowCalendar(true); setStartMenuOpen(false); }} />
           </div>
           <div className="border-t border-zinc-800 p-2">
+            <MenuItem
+              icon={<RotateCcw className="w-4 h-4 text-orange-400" />}
+              label="清除进度并重启"
+              onClick={() => {
+                if (window.confirm('确定要清除所有游戏进度并重新开始吗？此操作无法撤销。')) {
+                  resetGame();
+                }
+              }}
+            />
             <MenuItem
               icon={<Power className="w-4 h-4 text-red-400" />}
               label="关机"

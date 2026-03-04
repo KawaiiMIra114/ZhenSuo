@@ -206,16 +206,6 @@ export function Clinic() {
             ))}
           </nav>
         </div>
-
-        {/* V4 §4.3 HTML源码注释（模拟） → RUNE_02 */}
-        <InvestigateNode hookId="clinic_source_code" runeId="RUNE_02"
-          feedbackText={`源码最底部有一行注释……bbs_admin@tranquil-sleep.com？还有——'don't stare at the logo too long'——署名z？`}>
-          <div className="max-w-5xl mx-auto px-6">
-            <p className="text-[8px] text-gray-200 hover:text-gray-400 cursor-pointer font-mono select-all transition-colors py-0.5">
-              {'<!-- site maintenance contact: bbs_admin@tranquil-sleep.com | last maintained: 2024-03-19 | // reminder: don\'t stare at the logo too long // —z -->'}
-            </p>
-          </div>
-        </InvestigateNode>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
@@ -619,9 +609,19 @@ export function Clinic() {
           <InvestigateNode hookId="footer_investor" feedbackText="Meridian Bioscience Capital……这个投资机构的网站什么都没有，只有一句话和一个邮箱。">
             <span className="cursor-pointer hover:text-gray-600">投资者关系</span>
           </InvestigateNode>
-          <span className="cursor-pointer hover:text-gray-600" onClick={() => nav('faq')}>常见问题</span>
         </div>
       </footer>
+
+      {/* V4 §4.3 HTML源码注释（模拟） → RUNE_02。放置于 <body> (组件容器) 的最底部 */}
+      <InvestigateNode hookId="clinic_source_code" runeId="RUNE_02"
+        feedbackText={`源码最底部有一行注释……bbs_admin@tranquil-sleep.com？还有——'don't stare at the logo too long'——署名z？`}>
+        <div className="w-full">
+          <p className="text-[8px] text-gray-200 hover:text-gray-400 cursor-pointer font-mono select-all transition-colors py-0.5 px-6">
+            {'<!-- site maintenance contact: bbs_admin@tranquil-sleep.com | last maintained: 2024-03-19 | // reminder: don\'t stare at the logo too long // —z -->'}
+          </p>
+        </div>
+      </InvestigateNode>
+
     </div >
   );
 }

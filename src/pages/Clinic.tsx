@@ -14,7 +14,7 @@ type TeamMember = 'list' | 'zhong' | 'lin';
 type ArticleId = 'd1' | 'd2' | 'd3' | 'd4' | null;
 
 export function Clinic() {
-  const { readHook, hasReadHook, collectRune, hasRune, linXiaoSignalStrength, addFact, hasFact } = useGame();
+  const { readHook, hasReadHook, collectRune, hasRune, linXiaoSignalStrength, addFact, hasFact, setCurrentApp } = useGame();
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [teamView, setTeamView] = useState<TeamMember>('list');
   const [selectedArticle, setSelectedArticle] = useState<ArticleId>(null);
@@ -94,6 +94,7 @@ export function Clinic() {
           <p>&gt; 正在验证权限……</p>
           <p className="mt-2 text-green-300">&gt; 权限验证通过。正在加载终局界面……</p>
         </div>);
+        setTimeout(() => setCurrentApp('ending'), 2000);
       } else {
         setArchiveResult(<div className="bg-red-50 border border-red-300 rounded p-4 text-sm text-red-700">
           档案编号格式错误，请确认输入信息。

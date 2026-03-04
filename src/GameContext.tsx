@@ -5,12 +5,13 @@ import {
   GameContextType,
   EndingType,
   GamePhase,
-  RuneId
+  RuneId,
+  ForumAccess,
 } from './types';
 
 const STORAGE_KEY = 'zhensuo_save_v3';
 
-// 移除与持久化无关的非状态内容，仅保留要在 localStorage 里存取的
+// 持久化存档
 export interface SaveData {
   currentApp: AppState;
   gentleMode: boolean;
@@ -21,6 +22,8 @@ export interface SaveData {
   collectedRunes: RuneId[];
   isOALoggedIn: boolean;
   completedEndings: string[];
+  forumAccess: ForumAccess;       // V4
+  discoveredFacts: string[];      // V4
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -61,6 +64,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [collectedRunes, setCollectedRunes] = useState<RuneId[]>(saved?.collectedRunes ?? []);
   const [isOALoggedIn, setOALoggedInState] = useState(saved?.isOALoggedIn ?? false);
 
+  // V4 论坛层级
+  const [forumAccess, setForumAccessState] = useState<ForumAccess>(saved?.forumAccess ?? 'public');
+
+  // V4 防穿越前置条件
+  const [discoveredFacts, setDiscoveredFacts] = useState<string[]>(saved?.discoveredFacts ?? []);
+
   // 包装 setCurrentApp
   const setCurrentApp = useCallback((app: AppState) => {
     setCurrentAppState(app);
@@ -78,10 +87,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       collectedRunes,
       isOALoggedIn,
       completedEndings,
+      forumAccess,
+      discoveredFacts,
     });
   }, [
     currentApp, gentleMode, clues, endingType,
     readHooks, currentPhase, collectedRunes, isOALoggedIn, completedEndings,
+    forumAccess, discoveredFacts,
     writeSave
   ]);
 
@@ -125,12 +137,27 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // 林晓信号强度
   const linXiaoSignalStrength = collectedRunes.length;
 
-  // OA 系统
+  // OA 系统 — V4 防穿越
   const setOALoggedIn = useCallback((v: boolean) => setOALoggedInState(v), []);
   const canLoginOA = useCallback(() => {
-    // 根据 V3 §C，通过所有线索的获取和阅读来判断是否能进入 OA
-    return hasReadHook('fswltz') && hasClue('clue_purchase_order');
-  }, [hasReadHook, hasClue]);
+    // V4 防穿越：必须已发现 OA URL + 已知工号 8023
+    return discoveredFacts.includes('oa_url_discovered')
+      && discoveredFacts.includes('employee_8023_known');
+  }, [discoveredFacts]);
+
+  // V4 论坛层级
+  const setForumAccess = useCallback((access: ForumAccess) => {
+    setForumAccessState(access);
+  }, []);
+
+  // V4 防穿越前置条件
+  const addFact = useCallback((factId: string) => {
+    setDiscoveredFacts(prev => {
+      if (prev.includes(factId)) return prev;
+      return [...prev, factId];
+    });
+  }, []);
+  const hasFact = useCallback((factId: string) => discoveredFacts.includes(factId), [discoveredFacts]);
 
   // 结局收集
   const completeEnding = useCallback((endingId: string) => {
@@ -153,6 +180,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCollectedRunes([]);
     setOALoggedInState(false);
     setCompletedEndings([]);
+    setForumAccessState('public');
+    setDiscoveredFacts([]);
   }, []);
 
   return (
@@ -180,6 +209,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       // 结局
       endingType, setEndingType,
       completedEndings, completeEnding,
+
+      // V4 论坛层级
+      forumAccess, setForumAccess,
+
+      // V4 防穿越
+      discoveredFacts, addFact, hasFact,
 
       // 系统
       resetGame

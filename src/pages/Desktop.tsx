@@ -10,7 +10,8 @@ import {
   Monitor, Mail, Globe, FileText, Calendar, Power,
   ChevronUp, Clock, Wifi, Battery, Volume2,
   Inbox, Star, AlertTriangle, X,
-  RotateCcw
+  RotateCcw, MessageCircle, Send, Image, Smile, Scissors,
+  Phone, Video, MoreHorizontal, Search, FolderOpen, Mic
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════
@@ -33,39 +34,21 @@ interface EmailData {
 
 const EMAILS: EmailData[] = [
   {
-    id: 'welcome',
-    from: '安宁深眠诊所 <hr@tranquil-sleep.com>',
-    subject: '欢迎加入安宁深眠诊所大家庭',
-    date: '2024-03-01',
-    body: `亲爱的同事：
+    id: 'clinic_progress',
+    from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
+    subject: '关于患者林晓的诊疗进度更新',
+    date: '2024-03-21 02:47',
+    hookId: 'email_clinic_progress',
+    feedbackText: '凌晨两点四十七分发送的邮件……谁会在这个时间工作？',
+    body: `尊敬的患者家属，
 
-欢迎加入安宁深眠诊所！我们很高兴您成为团队的一员。
+您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
 
-请在入职首日完成以下事项：
-• 领取工牌与门禁卡（前台）
-• 阅读《员工手册》（OA 系统下载）
-• 完成信息安全培训（必修）
+如有疑问，欢迎拨打我们的24小时服务热线：
+400-XXX-XXXX
 
-如有任何问题，请联系人事部。
-
-祝工作愉快！
-人力资源部`,
-  },
-  {
-    id: 'encrypted',
-    from: '???',
-    subject: '（无主题）',
-    date: '2024-03-14',
-    isUrgent: true,
-    hookId: 'email_encrypted',
-    feedbackText: '这封邮件似乎被加密了……发件人信息丢失。',
-    body: `f5a8c1... [数据损坏]
-
-......别相信他们......
-
-LX-044-YIN
-
-[剩余 3,847 字节无法解码]`,
+安宁深眠（南郊）医疗研究中心
+患者服务中心`,
   },
   {
     id: 'family',
@@ -83,6 +66,22 @@ LX-044-YIN
 你帮忙问问，让她给家里打个电话。
 
 爸`,
+  },
+  {
+    id: 'encrypted',
+    from: '???',
+    subject: '（无主题）',
+    date: '2024-03-14',
+    isUrgent: true,
+    hookId: 'email_encrypted',
+    feedbackText: '这封邮件似乎被加密了……发件人信息丢失。',
+    body: `f5a8c1... [数据损坏]
+
+......别相信他们......
+
+LX-044-YIN
+
+[剩余 3,847 字节无法解码]`,
   },
   {
     id: 'it_notice',
@@ -132,16 +131,20 @@ export function Desktop() {
     currentApp, setCurrentApp,
     completedEndings, collectedRunes,
     hasReadHook, readHook, collectRune,
-    linXiaoSignalStrength, resetGame
+    linXiaoSignalStrength, resetGame,
+    addFact, hasFact
   } = useGame();
 
   const [startMenuOpen, setStartMenuOpen] = useState(false);
-  const [openWindows, setOpenWindows] = useState<string[]>([]);
+  const [openWindows, setOpenWindows] = useState<string[]>(['wechat', 'email', 'photos']);
   const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
   const [browserApp, setBrowserApp] = useState<'clinic' | 'forum' | 'oa' | null>(null);
-  const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(EMAILS[0]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
+  const [wechatMsg, setWechatMsg] = useState('');
+  const [wechatChat, setWechatChat] = useState<string>('linxiao');
+  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
   // 监听浏览器内部跨域跳转
   useEffect(() => {
@@ -234,13 +237,264 @@ export function Desktop() {
     >
       {/* 桌面图标区 */}
       <div className="absolute top-6 left-6 flex flex-col gap-4">
+        <DesktopIcon icon={<MessageCircle className="w-8 h-8" />} label="微信" badge="3" onClick={() => openWindow('wechat')} />
         <DesktopIcon icon={<Globe className="w-8 h-8" />} label="安宁官网" onClick={() => handleOpenBrowser('clinic')} />
         <DesktopIcon icon={<Mail className="w-8 h-8" />} label="邮件" badge={showRollbackEmail ? '!' : undefined} onClick={() => openWindow('email')} />
+        <DesktopIcon icon={<Image className="w-8 h-8" />} label="晓的照片" onClick={() => openWindow('photos')} />
         <DesktopIcon icon={<FileText className="w-8 h-8" />} label="门诊单" onClick={() => openWindow('record')} />
         <DesktopIcon icon={<Calendar className="w-8 h-8" />} label="日历" onClick={() => { openWindow('calendar'); setShowCalendar(true); }} />
         <DesktopIcon icon={<Monitor className="w-8 h-8" />} label="论坛" onClick={() => handleOpenBrowser('forum')} />
       </div>
 
+
+      {/* ===== 微信窗口（参照真实微信PC端布局）===== */}
+      {openWindows.includes('wechat') && (
+        <DraggableWindow
+          title="微信"
+          icon={<MessageCircle className="w-3.5 h-3.5" />}
+          onClose={() => closeWindow('wechat')}
+          width={820}
+          height={560}
+          defaultPosition={{ x: 100, y: 60 }}
+          zIndex={210}
+          isMinimized={minimizedWindows.includes('wechat')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('wechat', min)}
+        >
+          <div className="flex h-full bg-[#f5f5f5]">
+            {/* 左侧图标栏 - 仿微信绿色侧栏 */}
+            <div className="w-14 bg-[#2e2e2e] flex flex-col items-center py-4 gap-3 shrink-0">
+              <div className="w-8 h-8 rounded bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mb-2">
+                <span className="text-white text-xs font-bold">浩</span>
+              </div>
+              <button className="w-8 h-8 rounded flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 bg-white/5">
+                <MessageCircle className="w-4 h-4" />
+              </button>
+              <button className="w-8 h-8 rounded flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10">
+                <Search className="w-4 h-4" />
+              </button>
+              <button className="w-8 h-8 rounded flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10">
+                <FolderOpen className="w-4 h-4" />
+              </button>
+              <div className="flex-1" />
+              <button className="w-8 h-8 rounded flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10">
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 中间联系人列表 */}
+            <div className="w-60 bg-[#e7e7e7] border-r border-[#d5d5d5] flex flex-col shrink-0">
+              <div className="p-2">
+                <div className="bg-[#dcdcdc] rounded-md px-3 py-1.5 flex items-center gap-2">
+                  <Search className="w-3 h-3 text-gray-400" />
+                  <span className="text-xs text-gray-400">搜索</span>
+                </div>
+              </div>
+              {/* 林晓 - 置顶 */}
+              <div className={`px-3 py-2.5 flex items-center gap-3 cursor-pointer ${wechatChat === 'linxiao' ? 'bg-[#c6c6c6]' : 'hover:bg-[#d8d8d8]'} transition-colors`} onClick={() => setWechatChat('linxiao')}>
+                <div className="relative">
+                  <div className="w-10 h-10 rounded bg-gradient-to-br from-pink-300 to-pink-500 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-sm">晓</span>
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-bold">3</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-gray-800 font-medium">林晓</div>
+                  <div className="text-[11px] text-gray-500 truncate">好。</div>
+                </div>
+                <span className="text-[10px] text-gray-400 shrink-0">01/09</span>
+              </div>
+              {/* 其他联系人 - 可点击切换 */}
+              {[
+                { id: 'dad', name: '爸', msg: '让她给家里打个电话。', time: '03/10', color: 'from-blue-300 to-blue-500' },
+                { id: 'clinic', name: '诊所前台', msg: '您好，您已接通安宁深眠…', time: '02/25', color: 'from-teal-300 to-teal-500' },
+                { id: 'filehelper', name: '文件传输助手', msg: '没有什么好忧郁的，我就是…', time: '01/10', color: 'from-green-400 to-green-600' },
+              ].map(c => (
+                <div key={c.id} className={`px-3 py-2.5 flex items-center gap-3 cursor-pointer ${wechatChat === c.id ? 'bg-[#c6c6c6]' : 'hover:bg-[#d8d8d8]'} transition-colors`} onClick={() => setWechatChat(c.id)}>
+                  <div className={`w-10 h-10 rounded bg-gradient-to-br ${c.color} flex items-center justify-center shrink-0`}>
+                    <span className="text-white font-bold text-xs">{c.name[0]}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-800">{c.name}</div>
+                    <div className="text-[11px] text-gray-500 truncate">{c.msg}</div>
+                  </div>
+                  <span className="text-[10px] text-gray-400 shrink-0">{c.time}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* 右侧聊天区 — 根据 wechatChat 切换内容 */}
+            <div className="flex-1 flex flex-col bg-[#f5f5f5]">
+              {/* 聊天标题栏 */}
+              <div className="h-12 px-4 flex items-center justify-between border-b border-[#e0e0e0] bg-[#f5f5f5] shrink-0">
+                <span className="text-sm font-medium text-gray-800">
+                  {wechatChat === 'linxiao' ? '林晓' : wechatChat === 'dad' ? '爸' : wechatChat === 'clinic' ? '诊所前台' : '文件传输助手'}
+                </span>
+                <div className="flex items-center gap-3 text-gray-400">
+                  <Phone className="w-4 h-4 cursor-pointer hover:text-gray-600" />
+                  <Video className="w-4 h-4 cursor-pointer hover:text-gray-600" />
+                  <MoreHorizontal className="w-4 h-4 cursor-pointer hover:text-gray-600" />
+                </div>
+              </div>
+
+              {/* 消息区 */}
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                {/* ===== 林晓对话 ===== */}
+                {wechatChat === 'linxiao' && (<>
+                  <div className="text-center text-[11px] text-gray-400 my-2">1月9日 02:34</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-pink-300 to-pink-500 flex items-center justify-center shrink-0">
+                      <span className="text-white font-bold text-xs">晓</span>
+                    </div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">
+                      明天去了，不用担心我。你照顾好自己。
+                    </div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">1月9日 09:02</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">到了记得报平安。</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">1月9日 09:15</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-pink-300 to-pink-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">晓</span></div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">好。</div>
+                  </div>
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">2月25日 09:14</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div>
+                      <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">晓，在吗？打你电话没接。</div>
+                      <div className="text-right text-[10px] text-gray-400 mt-0.5">已送达，未读</div>
+                    </div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">3月1日 18:07</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div>
+                      <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">诊所说你在康复关键期，但都快两个月了。你还好吗。</div>
+                      <div className="text-right text-[10px] text-gray-400 mt-0.5">已送达，未读</div>
+                    </div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">3月10日 22:31</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div>
+                      <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">你到底怎么了。</div>
+                      <div className="text-right text-[10px] text-gray-400 mt-0.5">已送达，未读</div>
+                    </div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                </>)}
+
+                {/* ===== 爸的对话 ===== */}
+                {wechatChat === 'dad' && (<>
+                  <div className="text-center text-[11px] text-gray-400 my-2">3月8日 19:45</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">爸</span></div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">林浩，你妹妹还不回电话。你妈天天念叨。</div>
+                  </div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">爸，我在想办法联系她。诊所那边说还在恢复期。</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">3月10日 20:12</div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">爸</span></div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">你帮忙问问，让她给家里打个电话。</div>
+                  </div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">好，我再催催。</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                </>)}
+
+                {/* ===== 诊所前台对话 ===== */}
+                {wechatChat === 'clinic' && (<>
+                  <div className="text-center text-[11px] text-gray-400 my-2">2月25日 10:30</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">你好，我是患者林晓的家属，想了解一下她的治疗情况。</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-teal-300 to-teal-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">诊</span></div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">您好，您已接通安宁深眠诊所患者服务热线。林晓女士目前正处于康复关键期，暂不适宜接受探视。我们会定期向家属发送诊疗进度报告。</div>
+                  </div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">能不能让她接个电话？</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-teal-300 to-teal-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">诊</span></div>
+                    <div className="bg-white rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">非常抱歉，深度睡眠疗程期间患者需要保持完全的神经静息状态，外部刺激可能影响治疗效果。感谢您的理解与配合。</div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">此后每次发消息均为自动回复</div>
+                </>)}
+
+                {/* ===== 文件传输助手 ===== */}
+                {wechatChat === 'filehelper' && (<>
+                  <div className="text-center text-[11px] text-gray-400 my-2">1月10日 03:47</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">没有什么好忧郁的，我就是想不通她为什么不肯让我帮忙。</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="text-center text-[11px] text-gray-400 my-2">3月12日 01:23</div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">安宁深眠诊所 官网链接：tranquil-sleep.com</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                  <div className="flex items-start gap-3 justify-end">
+                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">今晚一定要把这个诊所查清楚</div>
+                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
+                  </div>
+                </>)}
+              </div>
+
+              {/* 底部工具栏 + 输入框 */}
+              <div className="border-t border-[#e0e0e0] bg-[#f5f5f5] shrink-0">
+                <div className="flex items-center gap-3 px-4 py-1.5 text-gray-400">
+                  <Smile className="w-5 h-5 cursor-pointer hover:text-gray-600" />
+                  <Scissors className="w-5 h-5 cursor-pointer hover:text-gray-600" />
+                  <FolderOpen className="w-5 h-5 cursor-pointer hover:text-gray-600" />
+                  <Image className="w-5 h-5 cursor-pointer hover:text-gray-600" />
+                  <Mic className="w-5 h-5 cursor-pointer hover:text-gray-600" />
+                </div>
+                <div className="px-4 pb-2">
+                  <textarea
+                    className="w-full h-16 bg-white rounded border-none outline-none resize-none text-sm text-gray-800 px-3 py-2"
+                    placeholder="输入消息…"
+                    value={wechatMsg}
+                    onChange={e => setWechatMsg(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey && wechatMsg.trim()) {
+                        e.preventDefault();
+                        setWechatMsg('');
+                        // 发送失败提示
+                        alert('消息发送失败，对方可能已关闭消息通知。');
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between items-center px-4 pb-2">
+                  <span className="text-[10px] text-gray-400">按住 Ctrl + Enter 换行</span>
+                  <button
+                    className="px-4 py-1 bg-[#e0e0e0] text-gray-500 rounded text-xs hover:bg-[#d5d5d5] transition-colors"
+                    onClick={() => {
+                      if (wechatMsg.trim()) {
+                        setWechatMsg('');
+                        alert('消息发送失败，对方可能已关闭消息通知。');
+                      }
+                    }}
+                  >
+                    发送(S)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DraggableWindow>
+      )}
 
       {/* ===== 邮件窗口 ===== */}
       {openWindows.includes('email') && (
@@ -317,6 +571,135 @@ export function Desktop() {
                 </div>
               )}
             </div>
+          </div>
+        </DraggableWindow>
+      )}
+
+      {/* ===== 晓的照片窗口 (V4 §3.2) ===== */}
+      {openWindows.includes('photos') && (
+        <DraggableWindow
+          title="晓的照片"
+          icon={<Image className="w-3.5 h-3.5" />}
+          onClose={() => { closeWindow('photos'); setSelectedPhoto(null); }}
+          width={680}
+          height={480}
+          defaultPosition={{ x: 180, y: 100 }}
+          zIndex={215}
+          isMinimized={minimizedWindows.includes('photos')}
+          onMinimizeToggle={(min) => toggleWindowMinimize('photos', min)}
+        >
+          <div className="h-full bg-zinc-900 overflow-y-auto p-4">
+            {selectedPhoto === null ? (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 0, desc: '路边摊吃饭', sub: '林晓在笑，但眼睛下面有很深的阴影' },
+                  { id: 1, desc: '手机截图', sub: '凌晨03:47的时钟App，林晓发给林浩，只配了一个句号' },
+                  { id: 2, desc: '诊所宣传折页', sub: '"这个好像不错，我想试试"' },
+                  { id: 3, desc: '林浩的回复截图', sub: '"贵不贵？我帮你出"' },
+                  { id: 4, desc: '林晓的回复', sub: '"不用，我自己来。"' },
+                  { id: 5, desc: '最后一条消息', sub: '"到了记得告诉我" —— 已送达，未读' },
+                ].map(photo => (
+                  <div
+                    key={photo.id}
+                    className="bg-zinc-800 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500/50 transition-all group"
+                    onClick={() => setSelectedPhoto(photo.id)}
+                  >
+                    <div className="aspect-square bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center p-4">
+                      <div className="text-center">
+                        <Image className="w-8 h-8 text-zinc-500 mx-auto mb-2 group-hover:text-zinc-400 transition-colors" />
+                        <p className="text-xs text-zinc-400 group-hover:text-zinc-300">{photo.desc}</p>
+                      </div>
+                    </div>
+                    <div className="p-2">
+                      <p className="text-[10px] text-zinc-500 truncate">{photo.sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col">
+                <button
+                  className="text-sm text-blue-400 mb-4 flex items-center gap-1 shrink-0"
+                  onClick={() => setSelectedPhoto(null)}
+                >
+                  ← 返回照片列表
+                </button>
+                <div className="flex-1 flex items-center justify-center">
+                  {selectedPhoto === 0 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <Image className="w-16 h-16 text-zinc-500 mx-auto mb-4" />
+                        <p className="text-sm text-zinc-300">两个人在路边摊吃饭。</p>
+                        <p className="text-sm text-zinc-300 mt-2">林晓在笑，但眼睛下面有很深的阴影。</p>
+                        <p className="text-xs text-zinc-500 mt-4">那种笑容，像是怕你看出什么。</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPhoto === 1 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <div className="bg-black rounded-lg p-6 mb-4">
+                          <p className="text-4xl font-mono text-white">03:47</p>
+                          <p className="text-xs text-zinc-500 mt-2">2024年1月6日 星期六</p>
+                        </div>
+                        <p className="text-sm text-zinc-300">林晓发给林浩的手机截图。</p>
+                        <p className="text-sm text-zinc-400 mt-2">只配了一个句号：<span className="text-zinc-300">。</span></p>
+                        <p className="text-xs text-zinc-500 mt-4">凌晨三点四十七分，她还醒着。</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPhoto === 2 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <div className="bg-gradient-to-br from-teal-900/30 to-blue-900/30 border border-teal-700/30 rounded-lg p-4 mb-4">
+                          <p className="text-teal-300 font-bold text-sm">安宁深眠诊所</p>
+                          <p className="text-teal-400/60 text-xs mt-1">DNR深度睡眠修复疗法</p>
+                          <p className="text-teal-400/60 text-xs">康复率97.3% · 无创无痛 · 医保可报</p>
+                        </div>
+                        <p className="text-sm text-zinc-300">林晓在图片下方打了一行字：</p>
+                        <p className="text-sm text-pink-300 mt-2 italic">"这个好像不错，我想试试"</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPhoto === 3 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <div className="bg-[#95ec69] rounded-lg px-4 py-2 inline-block mb-4">
+                          <p className="text-sm text-gray-800">贵不贵？我帮你出</p>
+                        </div>
+                        <p className="text-sm text-zinc-300 mt-2">林浩的回复截图。</p>
+                        <p className="text-xs text-zinc-500 mt-4">他一直想帮忙。</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPhoto === 4 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <div className="bg-white rounded-lg px-4 py-2 inline-block mb-4">
+                          <p className="text-sm text-gray-800">不用，我自己来。</p>
+                        </div>
+                        <p className="text-sm text-zinc-300 mt-2">林晓的回复。</p>
+                        <p className="text-xs text-zinc-500 mt-4">她从来不让别人帮忙。</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedPhoto === 5 && (
+                    <div className="text-center max-w-md">
+                      <div className="bg-zinc-800 rounded-lg p-8 mb-4">
+                        <div className="bg-[#95ec69] rounded-lg px-4 py-2 inline-block mb-4">
+                          <p className="text-sm text-gray-800">到了记得告诉我</p>
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1">已送达</p>
+                        <p className="text-sm text-zinc-300 mt-4">林浩发出的最后一条消息。</p>
+                        <p className="text-sm text-zinc-400 mt-2">显示"已送达"。</p>
+                        <p className="text-sm text-red-400/60 mt-2">没有已读。</p>
+                        <p className="text-xs text-zinc-600 mt-4">从此以后，再也没有了。</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </DraggableWindow>
       )}
@@ -408,7 +791,7 @@ export function Desktop() {
                   : 'bg-zinc-800/80 text-zinc-200 border-zinc-600/50 shadow-inner'}`}
               onClick={() => toggleWindowMinimize(w)}
             >
-              {w === 'email' ? '邮件' : w === 'record' ? '门诊单' : w === 'calendar' ? '日历' : w === 'browser' ? '浏览器' : w}
+              {w === 'wechat' ? '微信' : w === 'email' ? '邮件' : w === 'photos' ? '晓的照片' : w === 'record' ? '门诊单' : w === 'calendar' ? '日历' : w === 'browser' ? '浏览器' : w}
             </div>
           ))}
         </div>
@@ -433,9 +816,11 @@ export function Desktop() {
             <div className="text-zinc-400 text-xs font-mono mb-2">TRANQUIL-OS v2.4.1</div>
           </div>
           <div className="p-2">
+            <MenuItem icon={<MessageCircle className="w-4 h-4" />} label="微信" onClick={() => { openWindow('wechat'); setStartMenuOpen(false); }} />
             <MenuItem icon={<Globe className="w-4 h-4" />} label="安宁深眠诊所 官网" onClick={() => handleOpenBrowser('clinic')} />
             <MenuItem icon={<Monitor className="w-4 h-4" />} label="安宁社区 论坛" onClick={() => handleOpenBrowser('forum')} />
             <MenuItem icon={<Mail className="w-4 h-4" />} label="邮件" onClick={() => { openWindow('email'); setStartMenuOpen(false); }} />
+            <MenuItem icon={<Image className="w-4 h-4" />} label="晓的照片" onClick={() => { openWindow('photos'); setStartMenuOpen(false); }} />
             <MenuItem icon={<FileText className="w-4 h-4" />} label="门诊单" onClick={() => { openWindow('record'); setStartMenuOpen(false); }} />
             <MenuItem icon={<Calendar className="w-4 h-4" />} label="日历" onClick={() => { openWindow('calendar'); setShowCalendar(true); setStartMenuOpen(false); }} />
           </div>

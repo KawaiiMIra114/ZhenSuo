@@ -15,6 +15,7 @@ export function OA() {
     isOALoggedIn, setOALoggedIn, canLoginOA,
     readHook, hasReadHook, collectRune, hasRune,
     collectedRunes, setCurrentApp, setEndingType,
+    hasFact,
   } = useGame();
 
   const [view, setView] = useState<OAView>(isOALoggedIn ? 'dashboard' : 'login');
@@ -29,13 +30,17 @@ export function OA() {
     '',
   ]);
 
-  // 登录处理
+  // 登录处理 — V4 防穿越机制
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 前置条件拦截
-    if (!canLoginOA()) {
-      setLoginError('// 错误：操作过速。无前置设备授权记录。');
+    // V4 分级错误提示
+    if (!hasFact('oa_url_discovered')) {
+      setLoginError('// 错误：系统连接超时。请检查网络配置。');
+      return;
+    }
+    if (!hasFact('employee_8023_known')) {
+      setLoginError('// 错误：账号不存在或已被禁用。');
       return;
     }
 
@@ -113,8 +118,8 @@ export function OA() {
         <div className="w-96 p-8">
           <div className="text-center mb-8">
             <div className="text-2xl font-bold mb-1">TRANQUIL-OS</div>
-            <div className="text-xs text-[#005500]">INTRANET ACCESS PORTAL v2.4.1</div>
-            <div className="text-xs text-[#005500] mt-1">安宁深眠诊所 内部办公系统</div>
+            <div className="text-xs text-[#005500]">内部管理系统 v2.3.1</div>
+            <div className="text-xs text-[#005500] mt-1">安宁深眠（南郊）医疗研究中心</div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -165,7 +170,7 @@ export function OA() {
       {/* 顶部导航 */}
       <div className="border-b border-[#00ff00]/30 px-4 py-2 flex items-center justify-between">
         <div className="text-xs">
-          TRANQUIL-OS INTRANET | 已登录用户：<span className="font-bold">8023</span>
+          TRANQUIL-OS INTRANET | 用户：<span className="font-bold">MNT-8023</span> | 上次登录：2024-03-19 21:44
         </div>
         <div className="flex gap-3 text-xs">
           <button className={`hover:underline ${view === 'dashboard' ? 'font-bold' : ''}`} onClick={() => setView('dashboard')}>[主页]</button>
@@ -316,23 +321,16 @@ export function OA() {
               <span className="text-xs text-[#00ff00]/60">| 赵启 - 个人记事本</span>
             </div>
             <div className="font-mono text-xs space-y-3 text-[#00ff00]/70 leading-relaxed">
-              <p>// 赵启的个人笔记 - 勿动</p>
-              <p>3/5 - 今天到安宁的第9个月。这份外包合同还有3个月到期。争取不续约了。</p>
-              <p>3/7 - 7号柜的问题越来越严重。但每次汇报都被糊弄过去。他们在隐瞒什么？</p>
-              <p>3/9 - 拍到了柜子里面的符纸。里面有一段看起来像代码注释的东西：<span className="text-yellow-400">function_key = "JiuKu"</span></p>
-              <p>3/10 - "JiuKu"是什么意思？救苦？九窟？</p>
-              <p>3/11 - 在林医生的专栏文章里发现了端倪。他那四篇文章的标题首字连起来是——</p>
-              <p className="text-yellow-400">太、乙、救、苦 → <strong>TaiYi</strong></p>
-              <p>3/12 - 那么完整的密钥应该是：<span className="text-yellow-400">TaiYi + JiuKu = TaiYiJiuKu</span></p>
-              <p>3/12 - 但这个密钥是用来干什么的？我在系统里找到了一个隐藏的终端接口，需要执行OVERRIDE命令……</p>
-              <p>3/13 - 今天是最后一天了。不管怎样，我要试一试。</p>
-              <InvestigateNode hookId="oa_notebook_end" runeId="RUNE_05" feedbackText="记事本到这里就结束了……赵启再也没有写过新的内容。">
-                <p className="text-red-400/60 mt-4">
-                  // 最后更新：2024-03-13 22:47<br />
-                  // 文件状态：被标记为删除但未清理<br />
-                  <br />
-                  林医生专栏藏着另一半。如果你也在调查，去官网看看。
-                </p>
+              <p className="text-green-400">2024-03-19</p>
+              <p className="mt-2">今天是最后一次了。</p>
+              <p className="mt-2">林医生的专栏我查过了，她做了。</p>
+              <p>影子档案建好了，东西都在里面。</p>
+              <p>这里有七个碎片，我数过了。</p>
+              <p className="mt-2">如果有人把它们都找到了，</p>
+              <p>用<span className="text-yellow-400">"太乙救苦"的完整拼音</span>打开终局。</p>
+              <p className="mt-2">加油。</p>
+              <InvestigateNode hookId="oa_notebook_end" runeId="RUNE_05" feedbackText="赵启的最后记录……他已经为这一刻做好了所有准备。">
+                <p className="mt-4 text-green-600">——mnt-8023</p>
               </InvestigateNode>
             </div>
           </div>

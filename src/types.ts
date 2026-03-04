@@ -4,6 +4,9 @@ export type EndingType = 'A' | 'B' | 'C' | null;
 // 游戏进度四阶段制（V3 §二）
 export type GamePhase = 1 | 2 | 3 | 4;
 
+// 论坛访问层级（V4 四层系统）
+export type ForumAccess = 'public' | 'member' | 'admin' | 'shadow';
+
 // 七枚符文碎片 ID（V3 §4.2 碎片分布表）
 export type RuneId =
   | 'RUNE_01'  // B2层7号柜照片·符纸右下角
@@ -24,7 +27,7 @@ export interface Clue {
   description: string;
 }
 
-// V3 完整游戏状态接口（§4.1）
+// V3+V4 完整游戏状态接口
 export interface GameState {
   currentPhase: GamePhase;
   readHooks: string[];         // 已触发的进度锁 ID
@@ -32,6 +35,8 @@ export interface GameState {
   collectedRunes: RuneId[];    // 已收集的符文碎片
   linXiaoSignalStrength: number; // 0-7，对应已收集碎片数
   completedEndings: string[];  // 已完成的结局 ID
+  forumAccess: ForumAccess;    // V4 论坛访问层级
+  discoveredFacts: string[];   // V4 防穿越前置条件标记
 }
 
 // Context 暴露的完整接口
@@ -73,4 +78,13 @@ export interface GameContextType {
   resetGame: () => void;
   completedEndings: string[];
   completeEnding: (endingId: string) => void;
+
+  // V4 论坛层级系统
+  forumAccess: ForumAccess;
+  setForumAccess: (access: ForumAccess) => void;
+
+  // V4 防穿越前置条件
+  discoveredFacts: string[];
+  addFact: (factId: string) => void;
+  hasFact: (factId: string) => boolean;
 }

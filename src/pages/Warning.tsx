@@ -6,7 +6,7 @@ export function Warning() {
 
   const enterGame = (gentle: boolean) => {
     setGentleMode(gentle);
-    setCurrentApp('prologue');
+    setCurrentApp('desktop');
   };
 
   return (

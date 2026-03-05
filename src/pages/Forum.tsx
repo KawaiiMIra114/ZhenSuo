@@ -238,6 +238,7 @@ export function Forum() {
                 setForumAccess('admin');
                 setAdminError('');
                 readHook('forum_admin_logged_in');
+                addFact('oa_url_discovered'); // 管理员通讯中暴露内网OA地址
             } else {
                 setAdminError('密码正确，但您的会话状态异常，请重新登录。');
             }

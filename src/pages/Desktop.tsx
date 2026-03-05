@@ -34,74 +34,78 @@ interface EmailData {
 
 const EMAILS: EmailData[] = [
   {
-    id: 'clinic_progress',
+    id: 'clinic_progress_2',
     from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
     subject: '关于患者林晓的诊疗进度更新',
     date: '2024-03-21 02:47',
     hookId: 'email_clinic_progress',
-    feedbackText: '凌晨两点四十七分发送的邮件……谁会在这个时间工作？',
+    feedbackText: '这台机器在例行公事。没有任何人在看她。',
     body: `尊敬的患者家属，
 
 您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
 
-更多诊疗信息及探视指引，请访问官网：
+更多诊疗信息，请访问官网：
 www.tranquil-sleep.com
 
-如有疑问，欢迎拨打我们的24小时服务热线：
-400-XXX-XXXX
+如有疑问，欢迎拨打我们的24小时服务热线：400-XXX-XXXX
 
 安宁深眠（南郊）医疗研究中心
 患者服务中心`,
   },
   {
-    id: 'family',
-    from: '林建国 <ljg_father@163.com>',
-    subject: '晓晓最近好吗？',
-    date: '2024-03-10',
-    hookId: 'email_family',
-    feedbackText: '林晓的父亲……他不知道发生了什么。',
-    body: `林浩：
+    id: 'clinic_progress_1',
+    from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
+    subject: '关于患者林晓的诊疗进度更新',
+    date: '2024-03-01 10:23',
+    feedbackText: '三周前是深度康复阶段，现在还是……',
+    body: `尊敬的患者家属，
 
-你妹妹最近怎么样了？我和你妈打了好几次诊所的电话都没人接。
+您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
 
-上次你说她在做什么新疗法，效果很好，我们就没再去打扰。但都快两个月了，她一个电话都没回过。
+更多诊疗信息，请访问官网：
+www.tranquil-sleep.com
 
-你帮忙问问，让她给家里打个电话。
+如有疑问，欢迎拨打我们的24小时服务热线：400-XXX-XXXX
 
-爸`,
+安宁深眠（南郊）医疗研究中心
+患者服务中心`,
   },
   {
-    id: 'encrypted',
-    from: '???',
+    id: 'clinic_admission',
+    from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
+    subject: '林晓女士入院确认通知',
+    date: '2024-01-10 14:32',
+    feedbackText: '1月24日结束疗程。但现在是3月21日。',
+    body: `尊敬的患者家属，
+
+感谢您选择安宁深眠（南郊）医疗研究中心。
+林晓女士已于今日（2024年1月10日）顺利完成入院手续，正式开始DNR深度神经共振疗程。
+
+主治医师：钟长明院长 / 林雨桐主任
+疗程周期：2024年1月10日 — 2024年1月24日
+院内联系方式：请统一通过24小时服务热线联系。
+
+为保证治疗效果，康复关键期内患者将最大限度减少外界信息输入，此为正常医疗安排，敬请理解与配合。
+
+我们期待与您共同见证林晓女士的康复。
+
+安宁深眠（南郊）医疗研究中心
+患者服务中心`,
+  },
+  {
+    id: 'linxiao_last',
+    from: 'linxiao****@gmail.com',
     subject: '（无主题）',
-    date: '2024-03-14',
-    isUrgent: true,
-    hookId: 'email_encrypted',
-    feedbackText: '这封邮件似乎被加密了……发件人信息丢失。',
-    body: `f5a8c1... [数据损坏]
+    date: '2024-01-09 23:51',
+    feedbackText: '牛奶过期了……',
+    body: `哥，
 
-......别相信他们......
+明天去了。
+别担心我，也别总盯着手机等我回消息，我到了会跟你说的。
 
-LX-044-YIN
+你冰箱里那盒牛奶好像过期了，记得扔掉。
 
-[剩余 3,847 字节无法解码]`,
-  },
-  {
-    id: 'it_notice',
-    from: '信息技术部 <it@tranquil-sleep.com>',
-    subject: 'RE: B2层机房异常耗电通知',
-    date: '2024-03-12',
-    hookId: 'email_it_power',
-    body: `各位领导：
-
-关于B2层机房近期电力消耗异常一事，经排查确认为7号液冷机柜散热系统运行异常所致。
-
-当前该机柜日均耗电量已达 420kW，远超设计上限。
-
-建议安排专人巡检。
-
-IT外包运维 赵启
-工号：IT-EXT-0077`,
+晓`,
   },
 ];
 

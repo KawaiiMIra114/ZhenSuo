@@ -6,7 +6,6 @@ import { Desktop } from './pages/Desktop';
 import { Clinic } from './pages/Clinic';
 import { Forum } from './pages/Forum';
 import { OA } from './pages/OA';
-import { Terminal } from './pages/Terminal';
 import { Ending } from './pages/Ending';
 import { Notebook } from './components/Notebook';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -18,7 +17,6 @@ function GameRouter() {
 
   if (currentApp === 'warning') return <Warning />;
   if (currentApp === 'prologue') return <Prologue />;
-  if (currentApp === 'terminal') return <Terminal />;
   if (currentApp === 'ending') return <Ending />;
   if (currentApp === 'shutdown') return <ShutdownSequence />;
   // 对旧版本的 oa / forum / clinic 或未知状态，合并渲染到 Desktop

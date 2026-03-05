@@ -46,7 +46,7 @@ export function ShutdownSequence() {
         }, TIMING[phase]);
 
         return () => clearTimeout(timer);
-    }, [phase, advance, setCurrentApp]);
+    }, [phase, advance, setCurrentApp, boostSignal]);
 
     return (
         <div className="fixed inset-0 bg-black z-[99999] flex items-center justify-center">

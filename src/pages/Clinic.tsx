@@ -572,7 +572,8 @@ export function Clinic() {
               <p>因为这些方法都在处理表面症状，而不是根源。根源在于你的神经通路已经形成了一套固化的"失眠模式"，每天晚上自动启动。</p>
               <p>我在安宁诊所的这些年里，看到过太多患者从绝望到新生。每一个康复的案例都在告诉我同一件事：人的大脑拥有远超我们想象的自我修复能力。</p>
               <InvestigateNode hookId="article_d4_ending"
-                feedbackText="太、乙、救、苦……这四个字被加粗了。这是什么意思？">
+                feedbackText="太、乙、救、苦……这四个字被加粗了。这是什么意思？"
+                onReadComplete={() => addFact('linyuudon_message_found')}>
                 <p className="mt-4 text-gray-600">我想对每一个正在<strong className="text-gray-800">苦</strong>于失眠的你说：不要放弃。在这条漫长而黑暗的路上，哪怕只有<strong className="text-gray-800">太</strong>微弱的一丝光，也值得你走向它。因为在光的那一头，有你已经很久没有体验过的东西——<strong className="text-gray-800">乙</strong>烯基谷氨酸受体介导的深层修复性睡眠。科学已经为你准备好了<strong className="text-gray-800">救</strong>赎的路径。</p>
               </InvestigateNode>
               <p className="text-xs text-gray-400 mt-4">本文仅代表个人观点，未经诊所管理层审阅</p>

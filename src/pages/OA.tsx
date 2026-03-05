@@ -175,7 +175,7 @@ export function OA() {
                 icon={<FileText />}
                 title="[6] 系统备注"
                 desc="供维护人员记录临时备注"
-                onClick={() => setView('notebook')}
+                onClick={() => { setView('notebook'); addFact('password_half_juku_found'); }}
               />
             </div>
           </div>

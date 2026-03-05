@@ -148,7 +148,7 @@ export function OA() {
                 icon={<Users />}
                 title="[2] 人事档案查询"
                 desc="查询员工入职、调动及离职档案"
-                onClick={() => setView('personnel')}
+                onClick={() => { setView('personnel'); addFact('disappearance_evidence_found'); }}
               />
               <DashCard
                 icon={<BookOpen />}
@@ -175,7 +175,7 @@ export function OA() {
                 icon={<FileText />}
                 title="[6] 系统备注"
                 desc="供维护人员记录临时备注"
-                onClick={() => { setView('notebook'); addFact('password_half_juku_found'); }}
+                onClick={() => { setView('notebook'); addFact('password_half_juku_found'); addFact('password_instructions_found'); }}
               />
             </div>
           </div>

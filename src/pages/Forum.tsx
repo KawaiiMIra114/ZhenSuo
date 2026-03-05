@@ -239,6 +239,7 @@ export function Forum() {
                 setAdminError('');
                 readHook('forum_admin_logged_in');
                 addFact('oa_url_discovered'); // 管理员通讯中暴露内网OA地址
+                addFact('admin_unlocked'); // V4 §5.6 必须在验证通过后赋予此管理员通行Fact
             } else {
                 setAdminError('密码正确，但您的会话状态异常，请重新登录。');
             }
@@ -491,7 +492,11 @@ export function Forum() {
                                         </div>
                                     </div>
                                     <div className="border-t border-gray-100 pt-3 mt-4">
-                                        <InvestigateNode hookId="admin_archive_path" feedbackText="发现异常路径……这不是关键词，是一条被故意遗留的后门路径。">
+                                        <InvestigateNode
+                                            hookId="admin_archive_path"
+                                            feedbackText="发现异常路径……这不是关键词，是一条被故意遗留的后门路径。"
+                                            onReadComplete={() => addFact('shadow_archive_path_found')}
+                                        >
                                             <p className="text-gray-400 font-mono text-[10px] select-all cursor-text hover:text-gray-800 transition-colors">[ARCHIVE_PATH: /srv/bbs_backup/zq_mirror_20240101/]</p>
                                         </InvestigateNode>
                                     </div>

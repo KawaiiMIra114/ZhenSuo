@@ -129,6 +129,14 @@ const ROLLBACK_EMAIL: EmailData = {
 // 如果你看到这条……说明我的脚本还在跑。`,
 };
 
+// P2-15 被动环境暗示系统
+const AMBIENT_HINTS = [
+  '……气味不对……', '她还在里面', '别关机', 'B2层不是机房',
+  '那不是冷却液', '他们在笑', '你听到了吗', '管道在动',
+  '出不去了', '帮帮我', '记得报平安', '温度还在升……',
+  '朱砂', '7号柜', '太岁', '福生无量天尊',
+];
+
 export function Desktop() {
   const {
     currentApp, setCurrentApp,
@@ -179,13 +187,6 @@ export function Desktop() {
     return () => clearInterval(interval);
   }, [linXiaoSignalStrength]);
 
-  // P2-15 被动环境暗示系统
-  const AMBIENT_HINTS = [
-    '……气味不对……', '她还在里面', '别关机', 'B2层不是机房',
-    '那不是冷却液', '他们在笑', '你听到了吗', '管道在动',
-    '出不去了', '帮帮我', '记得报平安', '温度还在升……',
-    '朱砂', '7号柜', '太岁', '福生无量天尊',
-  ];
   const [ambientHint, setAmbientHint] = useState<{ text: string; x: number; y: number } | null>(null);
   useEffect(() => {
     if (linXiaoSignalStrength < 2) return;

@@ -601,7 +601,7 @@ export function Clinic() {
               <p className="font-bold text-gray-800 text-sm mb-2">Q：我想与其他康复患者交流经验，有什么渠道吗？</p>
               <p className="text-sm text-gray-600">
                 A：您可以访问我们的
-                <InvestigateNode hookId="faq_forum_url" feedbackText="状态栏短暂显示了一个URL……forum.tranquil-sleep.com/bbs。也许可以手动输入这个地址？">
+                <InvestigateNode hookId="faq_forum_url" feedbackText="状态栏短暂显示了一个URL……forum.tranquil-sleep.com/bbs。也许可以手动输入这个地址？" onReadComplete={() => addFact('forum_url_discovered')}>
                   <span className="text-gray-600 cursor-help relative group">
                     患者互助社区
                     <span className="absolute left-0 -bottom-5 text-[9px] font-mono text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
@@ -622,8 +622,8 @@ export function Clinic() {
         <p>© 2019-2024 安宁深眠（南郊）医疗研究中心 保留所有权利</p>
         <div className="mt-1 flex justify-center gap-4">
           <span className="cursor-pointer hover:text-gray-600" onClick={() => nav('contact')}>联系我们</span>
-          <InvestigateNode hookId="footer_investor" feedbackText="Meridian Bioscience Capital……这个投资机构的网站什么都没有，只有一句话和一个邮箱。">
-            <span className="cursor-pointer hover:text-gray-600">投资者关系</span>
+          <InvestigateNode hookId="footer_investor" feedbackText="Meridian Bioscience Capital……这个投资机构的网站什么都没有，只有一句话和一个邮箱。" onReadComplete={() => addFact('meridian_suspicious')}>
+            <span className="cursor-help hover:text-gray-600">投资者关系</span>
           </InvestigateNode>
         </div>
       </footer>

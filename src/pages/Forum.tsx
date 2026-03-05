@@ -647,14 +647,16 @@ export function Forum() {
                                                 <p className="mt-2 text-green-300">post_7829_complete.txt</p>
                                                 <p className="mt-8 text-right">—赵启</p>
 
-                                                {/* MNT RUNE 07 BACKUP */}
-                                                <div className="mt-32 pt-12 border-t border-green-950 text-xs text-green-800 opacity-20 hover:opacity-100 transition-opacity duration-[3000ms] cursor-default">
-                                                    <p>妈，你不用担心我。</p>
-                                                    <p className="mt-2">我在处理一件事，处理完就回来。</p>
-                                                    <p className="mt-2">家里那台空调过滤网该换了，你别自己爬上去换，</p>
-                                                    <p>等我回去换。</p>
-                                                    <p className="mt-4 text-right">—赵启</p>
-                                                </div>
+                                                {/* MNT RUNE 07 BACKUP — 滚动至底部发现 */}
+                                                <InvestigateNode hookId="shadow_readme_rune07" runeId="RUNE_07" feedbackText="他在最深的角落，用最平凡的话告别了最重要的人。">
+                                                    <div className="mt-32 pt-12 border-t border-green-950 text-xs text-green-800 opacity-20 hover:opacity-100 transition-opacity duration-[3000ms] cursor-default">
+                                                        <p>妈，你不用担心我。</p>
+                                                        <p className="mt-2">我在处理一件事，处理完就回来。</p>
+                                                        <p className="mt-2">家里那台空调过滤网该换了，你别自己爬上去换，</p>
+                                                        <p>等我回去换。</p>
+                                                        <p className="mt-4 text-right">—赵启</p>
+                                                    </div>
+                                                </InvestigateNode>
                                             </div>
                                         </div>
                                     )}

@@ -179,6 +179,32 @@ export function Desktop() {
     return () => clearInterval(interval);
   }, [linXiaoSignalStrength]);
 
+  // P2-15 被动环境暗示系统
+  const AMBIENT_HINTS = [
+    '……气味不对……', '她还在里面', '别关机', 'B2层不是机房',
+    '那不是冷却液', '他们在笑', '你听到了吗', '管道在动',
+    '出不去了', '帮帮我', '记得报平安', '温度还在升……',
+    '朱砂', '7号柜', '太岁', '福生无量天尊',
+  ];
+  const [ambientHint, setAmbientHint] = useState<{ text: string; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (linXiaoSignalStrength < 2) return;
+    // 信号越强，出现频率越高
+    const baseInterval = Math.max(15000 - linXiaoSignalStrength * 1500, 5000);
+    const interval = setInterval(() => {
+      if (Math.random() < 0.3 + linXiaoSignalStrength * 0.05) {
+        const text = AMBIENT_HINTS[Math.floor(Math.random() * AMBIENT_HINTS.length)];
+        setAmbientHint({
+          text,
+          x: 10 + Math.random() * 70,
+          y: 10 + Math.random() * 60,
+        });
+        setTimeout(() => setAmbientHint(null), 800 + Math.random() * 1200);
+      }
+    }, baseInterval);
+    return () => clearInterval(interval);
+  }, [linXiaoSignalStrength]);
+
   // 判断是否显示回溯邮件
   const showRollbackEmail = completedEndings.length > 0 && completedEndings.length < 3;
   const allEmails = showRollbackEmail ? [...EMAILS, ROLLBACK_EMAIL] : EMAILS;
@@ -238,6 +264,39 @@ export function Desktop() {
       style={{ backgroundImage: `url(${import.meta.env.BASE_URL}images/desktop_wallpaper.png)` }}
       onClick={() => startMenuOpen && setStartMenuOpen(false)}
     >
+      {/* P2-10 信号强度视觉覆盖层 (0-7级) */}
+      {linXiaoSignalStrength >= 2 && (
+        <div
+          className="fixed inset-0 pointer-events-none z-[1]"
+          style={{
+            background: linXiaoSignalStrength >= 6
+              ? `radial-gradient(ellipse at 50% 80%, rgba(255,0,60,${0.03 + linXiaoSignalStrength * 0.02}) 0%, transparent 70%)`
+              : linXiaoSignalStrength >= 4
+                ? `radial-gradient(ellipse at 50% 90%, rgba(200,0,40,${0.02 + linXiaoSignalStrength * 0.01}) 0%, transparent 60%)`
+                : `radial-gradient(ellipse at 50% 100%, rgba(150,0,30,0.02) 0%, transparent 50%)`,
+            animation: linXiaoSignalStrength >= 6 ? 'pulse 4s ease-in-out infinite' : undefined,
+          }}
+        />
+      )}
+      {linXiaoSignalStrength >= 7 && (
+        <div className="fixed bottom-16 right-6 text-red-900/20 text-[10px] font-mono pointer-events-none z-[1] animate-pulse">
+          LX-044-YIN 信号已锁定
+        </div>
+      )}
+      {/* P2-15 被动环境暗示 — 随机浮现的幽灵文字 */}
+      {ambientHint && (
+        <div
+          className="fixed pointer-events-none z-[2] text-red-500/15 text-xs font-mono select-none"
+          style={{
+            left: `${ambientHint.x}%`,
+            top: `${ambientHint.y}%`,
+            animation: 'fade-in-up 0.3s ease-out, fade-out 0.5s ease-in forwards',
+            animationDelay: '0s, 0.8s',
+          }}
+        >
+          {ambientHint.text}
+        </div>
+      )}
       {/* 桌面图标区 */}
       <div className="absolute top-6 left-6 flex flex-col gap-4">
         <DesktopIcon icon={<MessageCircle className="w-8 h-8" />} label="微信" badge="3" onClick={() => openWindow('wechat')} />

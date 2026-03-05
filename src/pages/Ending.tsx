@@ -21,6 +21,7 @@ export function Ending() {
   const [displayLines, setDisplayLines] = useState<string[]>([]);
   const [lineIndex, setLineIndex] = useState(0);
   const [endingComplete, setEndingComplete] = useState(false);
+  const [showZhaoQiEmail, setShowZhaoQiEmail] = useState(false);
 
   const runeCount = collectedRunes.length;
   const canChooseC = runeCount === 7;
@@ -208,8 +209,8 @@ export function Ending() {
 
   const endingTexts: Record<string, string[]> = { A: endingA, B: endingB, C: endingC };
 
-  // 选择结局后开始执行
-  const handleChoice = useCallback((c: EndingChoice) => {
+  // 实际开始结局执行
+  const executeChoice = useCallback((c: EndingChoice) => {
     if (!c) return;
     setChoice(c);
     setEndingType(c);
@@ -217,6 +218,16 @@ export function Ending() {
     setDisplayLines([]);
     setLineIndex(0);
   }, [setEndingType]);
+
+  // 选择结局 — 结局C先弹赵启邮件 (GDD §8.5)
+  const handleChoice = useCallback((c: EndingChoice) => {
+    if (!c) return;
+    if (c === 'C') {
+      setShowZhaoQiEmail(true);
+      return;
+    }
+    executeChoice(c);
+  }, [executeChoice]);
 
   // 逐行显示
   useEffect(() => {
@@ -408,6 +419,44 @@ export function Ending() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* GDD §8.5 赵启定时邮件 — 结局C选择前弹出 */}
+      {showZhaoQiEmail && (
+        <div className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center">
+          <div className="max-w-lg bg-zinc-900 border border-zinc-700 rounded-lg p-6 animate-in fade-in duration-1000">
+            <div className="text-xs text-zinc-500 font-mono mb-1">
+              发件人：zq_mnt_8023@protonmail.com
+            </div>
+            <div className="text-xs text-zinc-500 font-mono mb-1">
+              主题：这封邮件如果你看到了，说明程序触发了
+            </div>
+            <div className="text-xs text-zinc-500 font-mono mb-4">
+              发件时间：2024-03-19 22:34（系统接收时间：今天）
+            </div>
+            <div className="text-zinc-300 text-sm leading-relaxed space-y-3 font-serif">
+              <p>我不知道你是谁。</p>
+              <p>我在林晓的档案里找到了这个联系方式。</p>
+              <p>如果你看到了这封邮件，</p>
+              <p>说明你找到了那七个碎片，</p>
+              <p>说明程序正在等待最后的确认。</p>
+              <p className="mt-4">我不是英雄。</p>
+              <p>我只是觉得，如果我什么都不做，</p>
+              <p>以后我会一直记得那个气味。</p>
+              <p className="mt-4 text-amber-500/80">把它跑完。</p>
+              <p className="mt-4 text-zinc-500 text-right">赵启<br />2024-03-19</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowZhaoQiEmail(false);
+                executeChoice('C');
+              }}
+              className="mt-6 w-full py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-black transition-colors font-mono text-sm"
+            >
+              {'[继续执行七星破阵]'}
+            </button>
+          </div>
         </div>
       )}
     </div>

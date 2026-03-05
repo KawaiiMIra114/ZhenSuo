@@ -66,6 +66,7 @@ export interface GameContextType {
   collectRune: (runeId: RuneId) => void;
   hasRune: (runeId: RuneId) => boolean;
   linXiaoSignalStrength: number;
+  boostSignal: () => void;
 
   // V3 OA 登录拦截
   isOALoggedIn: boolean;

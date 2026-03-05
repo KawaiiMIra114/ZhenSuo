@@ -24,6 +24,7 @@ export interface SaveData {
   completedEndings: string[];
   forumAccess: ForumAccess;       // V4
   discoveredFacts: string[];      // V4
+  signalBoost: number;            // V4 额外信号增量
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -70,6 +71,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // V4 防穿越前置条件
   const [discoveredFacts, setDiscoveredFacts] = useState<string[]>(saved?.discoveredFacts ?? []);
 
+  // V4 林晓信号额外增量
+  const [signalBoost, setSignalBoost] = useState(saved?.signalBoost ?? 0);
+
   // 包装 setCurrentApp
   const setCurrentApp = useCallback((app: AppState) => {
     setCurrentAppState(app);
@@ -89,11 +93,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       completedEndings,
       forumAccess,
       discoveredFacts,
+      signalBoost,
     });
   }, [
     currentApp, gentleMode, clues, endingType,
     readHooks, currentPhase, collectedRunes, isOALoggedIn, completedEndings,
-    forumAccess, discoveredFacts,
+    forumAccess, discoveredFacts, signalBoost,
     writeSave
   ]);
 
@@ -134,8 +139,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const hasRune = useCallback((runeId: RuneId) => collectedRunes.includes(runeId), [collectedRunes]);
 
-  // 林晓信号强度
-  const linXiaoSignalStrength = collectedRunes.length;
+  // 林晓信号强度 = 碎片数 + 额外增量（关机惩罚等）
+  const linXiaoSignalStrength = collectedRunes.length + signalBoost;
+  const boostSignal = useCallback(() => {
+    setSignalBoost(prev => prev + 1);
+  }, []);
 
   // OA 系统 — V4 防穿越
   const setOALoggedIn = useCallback((v: boolean) => setOALoggedInState(v), []);
@@ -182,6 +190,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setCompletedEndings([]);
     setForumAccessState('public');
     setDiscoveredFacts([]);
+    setSignalBoost(0);
   }, []);
 
   return (
@@ -201,7 +210,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       currentPhase, advancePhase,
 
       // 符文
-      collectedRunes, collectRune, hasRune, linXiaoSignalStrength,
+      collectedRunes, collectRune, hasRune, linXiaoSignalStrength, boostSignal,
 
       // OA
       isOALoggedIn, setOALoggedIn, canLoginOA,

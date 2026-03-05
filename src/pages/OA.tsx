@@ -154,7 +154,7 @@ export function OA() {
                 icon={<BookOpen />}
                 title="[3] 设施维护日志"
                 desc="IT与基础设施运行状态巡检记录"
-                onClick={() => setView('logs')}
+                onClick={() => { setView('logs'); addFact('oa_maintenance_log_read'); }}
               />
               <DashCard
                 icon={<Server />}
@@ -552,10 +552,10 @@ function DashCard({ icon, title, desc, onClick, locked, disabled, disabledReason
     <button
       onClick={disabled ? undefined : onClick}
       className={`p-6 border text-left transition-all ${disabled
-          ? 'border-green-900/20 opacity-50 cursor-not-allowed bg-transparent'
-          : locked
-            ? 'border-red-900/50 hover:bg-red-950/20 bg-black'
-            : 'border-green-900 hover:border-green-500 hover:bg-green-900/10 bg-green-950/20 shadow-[0_4px_10px_rgba(0,255,0,0.02)] hover:shadow-[0_4px_15px_rgba(0,255,0,0.05)] text-green-400'
+        ? 'border-green-900/20 opacity-50 cursor-not-allowed bg-transparent'
+        : locked
+          ? 'border-red-900/50 hover:bg-red-950/20 bg-black'
+          : 'border-green-900 hover:border-green-500 hover:bg-green-900/10 bg-green-950/20 shadow-[0_4px_10px_rgba(0,255,0,0.02)] hover:shadow-[0_4px_15px_rgba(0,255,0,0.05)] text-green-400'
         }`}
     >
       <div className={`mb-4 flex items-center justify-between ${locked ? 'text-red-500/70' : (disabled ? 'text-green-800' : 'text-green-500')}`}>

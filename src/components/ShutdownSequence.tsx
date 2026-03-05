@@ -22,7 +22,7 @@ const TIMING: Record<Phase, number> = {
 };
 
 export function ShutdownSequence() {
-    const { setCurrentApp } = useGame();
+    const { setCurrentApp, boostSignal } = useGame();
     const [phase, setPhase] = useState<Phase>('black');
 
     const advance = useCallback((next: Phase) => {
@@ -31,6 +31,8 @@ export function ShutdownSequence() {
 
     useEffect(() => {
         if (phase === 'done') {
+            // P2-14: 关机惩罚增加林晓信号强度
+            boostSignal?.();
             setCurrentApp('desktop');
             return;
         }

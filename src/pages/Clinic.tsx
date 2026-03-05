@@ -114,9 +114,24 @@ export function Clinic() {
         无效输入。
       </div>);
     } else if (qu === 'GH_0314_LX') {
+      // GDD §4.2: 标题栏短暂显示"林晓"然后恢复
+      const origTitle = document.title;
+      document.title = '林晓';
+      setTimeout(() => { document.title = origTitle; }, 1500);
       setArchiveResult(<div className="bg-white border border-gray-300 rounded p-4 text-sm text-gray-600">
         <p className="font-mono text-gray-400">[账号已注销，相关档案已移除]</p>
       </div>);
+    } else if (q === 'nj0313') {
+      // GDD §4.2: 管理员会话检测
+      if (hasFact('admin_unlocked')) {
+        setArchiveResult(<div className="bg-green-50 border border-green-300 rounded p-4 text-sm text-green-700 font-mono">
+          您已登录管理员会话，无需通过此入口。
+        </div>);
+      } else {
+        setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
+          无效输入。
+        </div>);
+      }
     } else {
       setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
         未找到相关档案，请确认输入信息后重试。

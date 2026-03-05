@@ -20,7 +20,7 @@ export function Warning() {
         <div className="space-y-4 text-sm md:text-base leading-relaxed text-zinc-400">
           <p>本作品包含：邪教仪式描写、精神控制、强烈的视听冲击（包括突然的音效和画面变化）、心理恐怖元素。</p>
           <p>如您有癫痫病史或对上述内容感到不适，请谨慎体验。</p>
-          <p className="pt-4 text-xs text-zinc-600">建议佩戴耳机以获得完整体验。本游戏所有操作均在浏览器内完成，无需使用F12开发者工具。</p>
+          <p className="pt-4 text-xs text-zinc-600">建议佩戴耳机以获得完整视听效果。</p>
         </div>
 
         <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">

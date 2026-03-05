@@ -147,7 +147,7 @@ export function Forum() {
             replies: 0,
             isCollapsed: true,
             content: (
-                <InvestigateNode hookId="forum_rune_03" runeId="RUNE_03" feedbackText="他一直在暗中保存那些被删掉的声音……赵启发现MED-0019的离职记录那个下午，对比了新闻时间，喝了一瓶啤酒。">
+                <InvestigateNode hookId="forum_rune_03" runeId="RUNE_03">
                     <div className="space-y-3 text-sm text-gray-400 leading-relaxed">
                         <p>我室友入院第三周被告知需要转介到合作机构进行专项治疗，之后就再也没有消息了。</p>
                         <p>我问过诊所，他们给了我一个合作机构的电话，我打过去，是空号。</p>
@@ -178,9 +178,8 @@ export function Forum() {
             content: (
                 <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
                     <p className="text-yellow-400 font-bold">【重要公告】</p>
-                    <p>本板块实行严格的信息准确性审核。</p>
-                    <p>发布未经核实的信息可能对其他患者家属造成不必要的恐慌，违规内容将被移除处理。</p>
-                    <p>请各位保持理性、基于事实的交流。</p>
+                    <p>依据《数字交互准则》，发布未经证实之信息将被自动拦截或移除。</p>
+                    <p>系统已记录所有访问节点，请规范发言。</p>
                     <p className="text-right text-gray-500 mt-4">——安宁深眠患者服务中心</p>
                 </div>
             ),
@@ -447,7 +446,7 @@ export function Forum() {
                                     <Shield className="w-5 h-5 text-indigo-300" />
                                     <h3 className="font-bold text-lg">管理员控制面板</h3>
                                 </div>
-                                <p className="text-indigo-300 text-xs">当前会话：bbs_admin | 权限级别：[最高]</p>
+                                <p className="text-indigo-300 text-xs">Session: bbs_admin | Access: Level-S</p>
                             </div>
 
                             <div className="bg-white shadow-sm border border-gray-100 p-6 rounded-b-lg -mt-10">
@@ -494,7 +493,6 @@ export function Forum() {
                                     <div className="border-t border-gray-100 pt-3 mt-4">
                                         <InvestigateNode
                                             hookId="admin_archive_path"
-                                            feedbackText="发现异常路径……这不是关键词，是一条被故意遗留的后门路径。"
                                             onReadComplete={() => addFact('shadow_archive_path_found')}
                                         >
                                             <p className="text-gray-400 font-mono text-[10px] select-all cursor-text hover:text-gray-800 transition-colors">[ARCHIVE_PATH: /srv/bbs_backup/zq_mirror_20240101/]</p>
@@ -654,7 +652,7 @@ export function Forum() {
                                                 <p className="mt-8 text-right">—赵启</p>
 
                                                 {/* MNT RUNE 07 BACKUP — 滚动至底部发现 */}
-                                                <InvestigateNode hookId="shadow_readme_rune07" runeId="RUNE_07" feedbackText="他在最深的角落，用最平凡的话告别了最重要的人。">
+                                                <InvestigateNode hookId="shadow_readme_rune07" runeId="RUNE_07">
                                                     <div className="mt-32 pt-12 border-t border-green-950 text-xs text-green-800 opacity-20 hover:opacity-100 transition-opacity duration-[3000ms] cursor-default">
                                                         <p>妈，你不用担心我。</p>
                                                         <p className="mt-2">我在处理一件事，处理完就回来。</p>
@@ -668,7 +666,7 @@ export function Forum() {
                                     )}
 
                                     {selectedPost === 'shadow_7829' && (
-                                        <InvestigateNode hookId="forum_rune_07" feedbackText="赵启用最普通的话讲出了最危险的真相……他在最后时刻仍然没有放弃希望。">
+                                        <InvestigateNode hookId="forum_rune_07">
                                             <div className="animate-pulse-fast">
                                                 <p className="text-green-300 font-bold mb-4 border-b border-green-900/50 pb-2 inline-block">post_7829_complete.txt</p>
                                                 <div className="bg-green-950/20 p-4 border border-green-900/30 rounded mb-6 text-sm text-green-600">

@@ -251,7 +251,7 @@ export function OA() {
                 <p className="font-bold text-green-500">附注要求：</p>
                 <p>1. 上述材料采购走特殊财务通道，入账代码为“建筑与装修维护（PHX-01）”。</p>
                 <p>2. 所有物资必须在凌晨2:00前由专车从南门地下通道运入，直接存放在B2层临时库房。</p>
-                <InvestigateNode hookId="oa_purchase_check" feedbackText="这些采购物品……完全不像是医疗用品。">
+                <InvestigateNode hookId="oa_purchase_check">
                   <p className="text-yellow-500/80 font-bold bg-yellow-900/20 px-2 py-1 inline-block mt-2">
                     3. 符材验收须由钟院长本人到场，任何他人不得开箱。
                   </p>
@@ -281,7 +281,7 @@ export function OA() {
                 <span>过滤条件：状态 = [离职申请_审查中]</span>
               </div>
 
-              <InvestigateNode hookId="oa_personnel_check" feedbackText="她最后一次出勤就在那条新闻发出的前一个月……这绝不是巧合。">
+              <InvestigateNode hookId="oa_personnel_check">
                 <div className="bg-green-950/20 border border-green-800 p-4 rounded hover:bg-green-900/20 transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-green-300 font-bold text-lg">MED-0019 (档案封存)</h3>
@@ -356,7 +356,7 @@ export function OA() {
                 <span className="rotate-90 tracking-widest text-[8px]">EOF EOF EOF EOF EOF EOF</span>
               </div>
 
-              <InvestigateNode hookId="oa_logs_hidden" runeId="RUNE_05" feedbackText="他发现了连代码和电缆都无法掩盖的真相……那不是机器，那是另一座更深的地狱。">
+              <InvestigateNode hookId="oa_logs_hidden" runeId="RUNE_05">
                 <div className="bg-black border border-green-900/40 p-8 shadow-2xl mt-12">
                   <p className="text-green-500/60 mb-6 font-mono text-xs">——————</p>
                   <p className="text-green-400 font-bold mb-4">如果你在读这个，说明你进来了。</p>
@@ -454,7 +454,7 @@ export function OA() {
                 </div>
               </div>
 
-              <InvestigateNode hookId="oa_photo_rune1" runeId="RUNE_01" feedbackText="赵启在符纸照片的元数据中，留下了他最后的操作记录……">
+              <InvestigateNode hookId="oa_photo_rune06" runeId="RUNE_06">
                 <div className="bg-black border border-yellow-900/50 p-4 relative group cursor-pointer hover:border-yellow-600 transition-colors">
                   <div className="absolute top-2 right-2 flex gap-1 z-10">
                     <button
@@ -480,7 +480,6 @@ export function OA() {
                   </div>
                   <div className="mt-3 text-xs text-yellow-600 flex justify-between">
                     <span className="font-bold">图片二：7号机柜内部细节</span>
-                    <span className="text-red-500 font-bold">* 关键证据 *</span>
                   </div>
 
                   {/* Hidden Meta Data that shows on hover of the button */}

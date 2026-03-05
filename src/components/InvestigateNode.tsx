@@ -12,8 +12,6 @@ import { RUNE_STORIES } from '../data/runeStories';
 interface InvestigateNodeProps {
     hookId: string;
     condition?: boolean;
-    feedbackType?: FeedbackType;
-    feedbackText?: string;
     runeId?: RuneId;
     onReadComplete?: () => void;
     children: React.ReactNode;
@@ -23,22 +21,19 @@ interface InvestigateNodeProps {
 export function InvestigateNode({
     hookId,
     condition = true,
-    feedbackType = 'bubble',
-    feedbackText,
     runeId,
     onReadComplete,
     children,
     className = '',
 }: InvestigateNodeProps) {
     const { readHook, hasReadHook, collectRune, hasRune } = useGame();
-    const [showFeedback, setShowFeedback] = useState(false);
     const [runeStory, setRuneStory] = useState<string | null>(null);
     const alreadyRead = hasReadHook(hookId);
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         if (!condition) return;
-        if (alreadyRead && !feedbackText) return;
+        if (alreadyRead) return;
 
         readHook(hookId);
 
@@ -52,13 +47,8 @@ export function InvestigateNode({
             }
         }
 
-        if (feedbackText && feedbackType === 'bubble') {
-            setShowFeedback(true);
-            setTimeout(() => setShowFeedback(false), 4000);
-        }
-
         onReadComplete?.();
-    }, [condition, alreadyRead, hookId, runeId, feedbackText, feedbackType, readHook, collectRune, hasRune, onReadComplete]);
+    }, [condition, alreadyRead, hookId, runeId, readHook, collectRune, hasRune, onReadComplete]);
 
     return (
         <>
@@ -68,12 +58,6 @@ export function InvestigateNode({
                 onClick={handleClick}
             >
                 {children}
-
-                {showFeedback && feedbackText && (
-                    <span className="investigate-bubble">
-                        {feedbackText}
-                    </span>
-                )}
             </span>
 
             {/* V4 §7.2 赵启叙事片段 — 全屏覆盖层 */}

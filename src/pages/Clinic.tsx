@@ -105,13 +105,13 @@ export function Clinic() {
         此查询类型不在患者档案范围内。
       </div>);
     } else if (q === '8023') {
-      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
-        未找到相关档案，请确认输入信息后重试。
+      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600 font-mono">
+        查询结果为空。(0 Records Found)
         {/* <!-- employee query detected: MNT-8023 — this system is not for employee lookup --> */}
       </div>);
     } else if (q === 'fswltz') {
-      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
-        无效输入。
+      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600 font-mono">
+        无效字符序列。(Invalid Input)
       </div>);
     } else if (qu === 'GH_0314_LX') {
       // GDD §4.2: 标题栏短暂显示"林晓"然后恢复
@@ -128,13 +128,13 @@ export function Clinic() {
           您已登录管理员会话，无需通过此入口。
         </div>);
       } else {
-        setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
-          无效输入。
+        setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600 font-mono">
+          拒绝访问。(Access Denied)
         </div>);
       }
     } else {
-      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600">
-        未找到相关档案，请确认输入信息后重试。
+      setArchiveResult(<div className="bg-gray-50 border border-gray-300 rounded p-4 text-sm text-gray-600 font-mono">
+        该档案编号在数据库中不存在。
       </div>);
     }
   };
@@ -368,8 +368,7 @@ export function Clinic() {
                   {r.isSpecial && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
                       <p className="text-xs text-gray-400 mb-1">[此回复来自已注销账号，内容已折叠]</p>
-                      <InvestigateNode hookId="review_orphan_reply" runeId="RUNE_01"
-                        feedbackText="祝你早日康复……这条孤悬的回复，是有人在她入院之后留给她的。挂在这里，没有人再看。">
+                      <InvestigateNode hookId="review_orphan_reply" runeId="RUNE_01">
                         <details className="cursor-pointer">
                           <summary className="text-xs text-blue-500">[展开]</summary>
                           <p className="text-xs text-gray-500 mt-1 italic">[账号已注销]：祝你早日康复。</p>
@@ -489,7 +488,7 @@ export function Clinic() {
         {/* ════════ 专家专栏 V4 §4.5 ════════ */}
         {activeTab === 'articles' && !selectedArticle && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800">🩺 专家专栏 — 林德坤 主任医师</h2>
+            <h2 className="text-xl font-bold text-gray-800">专家专栏 — 林德坤 主任医师</h2>
             <p className="text-sm text-gray-500 mb-4">神经内科主任 · 钟院长的学术继承人</p>
             {([
               { id: 'd1' as ArticleId, title: '太多人误解了深度睡眠的本质', date: '2024-01-20' },
@@ -532,8 +531,7 @@ export function Clinic() {
               <p className="text-xs text-gray-400">林德坤 · 2024-02-05</p>
               <p>乙酰胆碱（Acetylcholine, ACh）是中枢神经系统中最重要的兴奋性神经递质之一。近年来的研究表明，ACh在REM睡眠的启动和维持中扮演着核心角色。</p>
               <p>本文综述了2022-2024年间该领域的主要进展，重点讨论了ACh受体亚型在睡眠-觉醒周期中的差异化调控机制。</p>
-              <InvestigateNode hookId="col_d2_locked" runeId="RUNE_04"
-                feedbackText="这一段……被权限锁定了。灰色遮罩下面有东西。林医生和赵启在会议室的那个傍晚……">
+              <InvestigateNode hookId="col_d2_locked" runeId="RUNE_04">
                 <div className="bg-gray-100 p-4 rounded border cursor-pointer relative overflow-hidden">
                   <div className="absolute inset-0 bg-gray-200/80 flex items-center justify-center">
                     <p className="text-xs text-gray-500">[此内容需要专业账号访问]</p>
@@ -572,9 +570,8 @@ export function Clinic() {
               <p>因为这些方法都在处理表面症状，而不是根源。根源在于你的神经通路已经形成了一套固化的"失眠模式"，每天晚上自动启动。</p>
               <p>我在安宁诊所的这些年里，看到过太多患者从绝望到新生。每一个康复的案例都在告诉我同一件事：人的大脑拥有远超我们想象的自我修复能力。</p>
               <InvestigateNode hookId="article_d4_ending"
-                feedbackText="太、乙、救、苦……这四个字被加粗了。这是什么意思？"
                 onReadComplete={() => addFact('linyuudon_message_found')}>
-                <p className="mt-4 text-gray-600">我想对每一个正在<strong className="text-gray-800">苦</strong>于失眠的你说：不要放弃。在这条漫长而黑暗的路上，哪怕只有<strong className="text-gray-800">太</strong>微弱的一丝光，也值得你走向它。因为在光的那一头，有你已经很久没有体验过的东西——<strong className="text-gray-800">乙</strong>烯基谷氨酸受体介导的深层修复性睡眠。科学已经为你准备好了<strong className="text-gray-800">救</strong>赎的路径。</p>
+                <p className="mt-4 text-gray-600">在这条漫长而黑暗的路上，哪怕只有<strong className="text-gray-800">太</strong>微弱的一丝光，也值得你走向它。因为在光的那一头，有你已经很久没有体验过的东西——<strong className="text-gray-800">乙</strong>烯基谷氨酸受体介导的深层修复性睡眠。科学已经为你准备好了<strong className="text-gray-800">救</strong>赎的路径。我想对每一个正在<strong className="text-gray-800">苦</strong>于失眠的你说：不要放弃。</p>
               </InvestigateNode>
               <p className="text-xs text-gray-400 mt-4">本文仅代表个人观点，未经诊所管理层审阅</p>
             </div>
@@ -601,7 +598,7 @@ export function Clinic() {
               <p className="font-bold text-gray-800 text-sm mb-2">Q：我想与其他康复患者交流经验，有什么渠道吗？</p>
               <p className="text-sm text-gray-600">
                 A：您可以访问我们的
-                <InvestigateNode hookId="faq_forum_url" feedbackText="状态栏短暂显示了一个URL……forum.tranquil-sleep.com/bbs。也许可以手动输入这个地址？" onReadComplete={() => addFact('forum_url_discovered')}>
+                <InvestigateNode hookId="faq_forum_url" onReadComplete={() => addFact('forum_url_discovered')}>
                   <span className="text-gray-600 cursor-help relative group">
                     患者互助社区
                     <span className="absolute left-0 -bottom-5 text-[9px] font-mono text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap pointer-events-none">
@@ -622,15 +619,14 @@ export function Clinic() {
         <p>© 2019-2024 安宁深眠（南郊）医疗研究中心 保留所有权利</p>
         <div className="mt-1 flex justify-center gap-4">
           <span className="cursor-pointer hover:text-gray-600" onClick={() => nav('contact')}>联系我们</span>
-          <InvestigateNode hookId="footer_investor" feedbackText="Meridian Bioscience Capital……这个投资机构的网站什么都没有，只有一句话和一个邮箱。" onReadComplete={() => addFact('meridian_suspicious')}>
+          <InvestigateNode hookId="footer_investor" onReadComplete={() => addFact('meridian_suspicious')}>
             <span className="cursor-help hover:text-gray-600">投资者关系</span>
           </InvestigateNode>
         </div>
       </footer>
 
       {/* V4 §4.3 HTML源码注释（模拟） → RUNE_02。放置于 <body> (组件容器) 的最底部 */}
-      <InvestigateNode hookId="clinic_source_code" runeId="RUNE_02"
-        feedbackText={`源码最底部有一行注释……bbs_admin@tranquil-sleep.com？还有——'don't stare at the logo too long'——署名z？`}>
+      <InvestigateNode hookId="clinic_source_code" runeId="RUNE_02">
         <div className="w-full">
           <p className="text-[8px] text-gray-200 hover:text-gray-400 cursor-pointer font-mono select-all transition-colors py-0.5 px-6">
             {'<!-- site maintenance contact: bbs_admin@tranquil-sleep.com | last maintained: 2024-03-19 | // reminder: don\'t stare at the logo too long // —z -->'}

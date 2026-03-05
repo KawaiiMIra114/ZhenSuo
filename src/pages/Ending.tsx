@@ -321,19 +321,19 @@ export function Ending() {
             <div className="text-[#00ff00]">{'\> 系统检测到异常指令序列'}</div>
             <div className="text-[#00ff00]">{'\> 正在验证权限……'}</div>
             <div className="text-[#00ff00] mt-4">
-              {`\> 检测到阵法覆写函数碎片：[${runeCount}/7]`}
+              {`\> 检测到阵法覆写函数残片输入……`}
             </div>
 
             {runeCount < 7 ? (
-              <div className="mt-4 space-y-1 text-red-400/80 text-xs">
-                <div>{`\> 警告：当前碎片数量不足（${runeCount}/7）`}</div>
-                <div>{'  太乙救苦反编译阵列无法完整激活。'}</div>
+              <div className="mt-4 space-y-1 text-red-500/80 text-xs animate-pulse">
+                <div>{`\> 警告：签名不完整，太乙救苦反编译阵列无法激活。`}</div>
                 <div>{'  强行执行将导致部分节点未被覆盖，'}</div>
                 <div>{'  系统将触发自修复程序。'}</div>
               </div>
             ) : (
-              <div className="mt-4 space-y-1 text-green-400 text-xs">
-                <div>{'\> 验证碎片完整性：[7/7] ✓'}</div>
+              <div className="mt-4 space-y-1 text-green-400 text-xs drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]">
+                <div>{'\> 验证指令完整性：[完美匹配] ✓'}</div>
+                <div>{'  太岁高维接口：已暴露'}</div>
                 <div>{'  太乙救苦反编译阵列：就绪'}</div>
               </div>
             )}
@@ -363,27 +363,19 @@ export function Ending() {
                 onClick={() => handleChoice('C')}
               />
             ) : (
-              <div className="w-full p-4 border border-gray-800 rounded-lg text-left font-mono text-sm text-gray-700">
+              <div className="w-full p-4 border border-red-900/30 bg-red-950/20 rounded-lg text-left font-mono text-sm text-red-500/50">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-700">[C]</span>
-                  <span>???</span>
+                  <span className="text-xs">[C]</span>
+                  <span>[加密指令段]</span>
                 </div>
-                <p className="text-xs mt-1 text-gray-700">
-                  {`\> 注：第三选项需要完整的七枚碎片方可显示。`}
-                </p>
-                <p className="text-xs text-gray-700">
-                  {`  当前缺少：${missingRunes.join(', ')}`}
+                <p className="text-xs mt-1">
+                  {`\> ERR_SIGNATURE_INVALID：需要更多系统底层权限碎片以解密该选项。`}
                 </p>
               </div>
             )}
           </div>
 
-          {completedEndings.length > 0 && (
-            <div className="text-center text-xs text-gray-600 font-mono">
-              已体验结局：{completedEndings.join(', ')}
-            </div>
-          )}
-
+          {/* 移除已体验结局提示 */}
           {/* 返回调查按钮 (V4 §10.2 岔路三) */}
           <div className="text-center">
             <button
@@ -412,11 +404,7 @@ export function Ending() {
                 {'>>> 返回桌面'}
               </button>
 
-              {completedEndings.length < 2 && (
-                <p className="text-xs text-gray-600 mt-3 font-mono">
-                  // 系统检测到未完成的分支路径
-                </p>
-              )}
+              {/* 移除缺失分支提示 */}
             </div>
           )}
         </div>
@@ -479,10 +467,9 @@ function EndingButton({ label, tag, completed, onClick }: {
     >
       <div className="flex items-center justify-between">
         <div>
-          <span className="text-xs text-gray-600 mr-2">[{tag}]</span>
-          <span className={`font-bold ${completed ? 'line-through' : ''}`}>{label}</span>
+          <span className="text-xs text-green-700 mr-2">[{tag}]</span>
+          <span className={`font-bold ${completed ? 'text-green-900 line-through' : ''}`}>{label}</span>
         </div>
-        {completed && <span className="text-xs text-gray-600">✓ 已体验</span>}
       </div>
     </button>
   );

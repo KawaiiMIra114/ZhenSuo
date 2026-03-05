@@ -29,7 +29,6 @@ interface EmailData {
   isUrgent?: boolean;
   isSystem?: boolean;
   hookId?: string;
-  feedbackText?: string;
 }
 
 const EMAILS: EmailData[] = [
@@ -39,7 +38,6 @@ const EMAILS: EmailData[] = [
     subject: '关于患者林晓的诊疗进度更新',
     date: '2024-03-21 02:47',
     hookId: 'email_clinic_progress',
-    feedbackText: '这台机器在例行公事。没有任何人在看她。',
     body: `尊敬的患者家属，
 
 您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
@@ -57,7 +55,6 @@ www.tranquil-sleep.com
     from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
     subject: '关于患者林晓的诊疗进度更新',
     date: '2024-03-01 10:23',
-    feedbackText: '三周前是深度康复阶段，现在还是……',
     body: `尊敬的患者家属，
 
 您好。林晓女士目前正处于深度康复阶段，各项生理指标均在预期范围内，治疗团队将持续跟进。
@@ -75,7 +72,6 @@ www.tranquil-sleep.com
     from: '安宁深眠诊所 患者服务中心 <service@tranquil-sleep.com>',
     subject: '林晓女士入院确认通知',
     date: '2024-01-10 14:32',
-    feedbackText: '1月24日结束疗程。但现在是3月21日。',
     body: `尊敬的患者家属，
 
 感谢您选择安宁深眠（南郊）医疗研究中心。
@@ -97,7 +93,6 @@ www.tranquil-sleep.com
     from: 'linxiao****@gmail.com',
     subject: '（无主题）',
     date: '2024-01-09 23:51',
-    feedbackText: '牛奶过期了……',
     body: `哥，
 
 明天去了。
@@ -109,36 +104,12 @@ www.tranquil-sleep.com
   },
 ];
 
-// 结局回溯邮件（V3 §结局回溯机制）
-const ROLLBACK_EMAIL: EmailData = {
-  id: 'rollback',
-  from: '系统碎片残余 - 节点 ZK-0077 <ghost@null.tranquil>',
-  subject: '[自动转发] 你还有机会',
-  date: '2024-03-14',
-  isSystem: true,
-  body: `>>> 检测到会话记录未完全覆写
->>> 回滚点仍然有效
-
-你已经看到了一个结局。
-
-但日志显示……决策分支树中还存在未执行的路径。
-
-如果你想改变什么——
-时间窗口仍然存在。
-
-[进入终局决策界面]
-
-——— ZK-0077-GHOST ———
-// 此消息由崩溃前最后一次 crontab 定时任务自动发送
-// 如果你看到这条……说明我的脚本还在跑。`,
-};
 
 // P2-15 被动环境暗示系统
 const AMBIENT_HINTS = [
   '……气味不对……', '她还在里面', '别关机', 'B2层不是机房',
   '那不是冷却液', '他们在笑', '你听到了吗', '管道在动',
   '出不去了', '帮帮我', '记得报平安', '温度还在升……',
-  '朱砂', '7号柜', '太岁', '福生无量天尊',
 ];
 
 export function Desktop() {
@@ -210,9 +181,7 @@ export function Desktop() {
     return () => clearInterval(interval);
   }, [linXiaoSignalStrength]);
 
-  // 判断是否显示回溯邮件
-  const showRollbackEmail = completedEndings.length > 0 && completedEndings.length < 3;
-  const allEmails = showRollbackEmail ? [...EMAILS, ROLLBACK_EMAIL] : EMAILS;
+  const allEmails = EMAILS;
 
   const toggleWindowMinimize = (id: string, forceMinimize?: boolean) => {
     setMinimizedWindows(prev => {
@@ -306,7 +275,7 @@ export function Desktop() {
       <div className="absolute top-6 left-6 flex flex-col gap-4">
         <DesktopIcon icon={<MessageCircle className="w-8 h-8" />} label="微信" badge="3" onClick={() => openWindow('wechat')} />
         <DesktopIcon icon={<Globe className="w-8 h-8" />} label="安宁官网" onClick={() => handleOpenBrowser('clinic')} />
-        <DesktopIcon icon={<Mail className="w-8 h-8" />} label="邮件" badge={showRollbackEmail ? '!' : undefined} onClick={() => openWindow('email')} />
+        <DesktopIcon icon={<Mail className="w-8 h-8" />} label="邮件" onClick={() => openWindow('email')} />
         <DesktopIcon icon={<Image className="w-8 h-8" />} label="晓的照片" onClick={() => openWindow('photos')} />
         <DesktopIcon icon={<FileText className="w-8 h-8" />} label="门诊单" onClick={() => openWindow('record')} />
         <DesktopIcon icon={<Calendar className="w-8 h-8" />} label="日历" onClick={() => { openWindow('calendar'); setShowCalendar(true); }} />
@@ -511,10 +480,6 @@ export function Desktop() {
                     <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">安宁深眠诊所 官网链接：tranquil-sleep.com</div>
                     <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
                   </div>
-                  <div className="flex items-start gap-3 justify-end">
-                    <div className="bg-[#95ec69] rounded-lg px-3 py-2 max-w-xs shadow-sm text-sm text-gray-800">今晚一定要把这个诊所查清楚</div>
-                    <div className="w-9 h-9 rounded bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center shrink-0"><span className="text-white font-bold text-xs">浩</span></div>
-                  </div>
                 </>)}
               </div>
 
@@ -614,7 +579,6 @@ export function Desktop() {
                   {selectedEmail.hookId ? (
                     <InvestigateNode
                       hookId={selectedEmail.hookId}
-                      feedbackText={selectedEmail.feedbackText}
                     >
                       <pre className="whitespace-pre-wrap font-sans">
                         {selectedEmail.body.split('www.tranquil-sleep.com').map((part, i, arr) => (
@@ -648,16 +612,6 @@ export function Desktop() {
                         </React.Fragment>
                       ))}
                     </pre>
-                  )}
-
-                  {/* 回溯邮件特殊按钮 */}
-                  {selectedEmail.id === 'rollback' && (
-                    <button
-                      className="mt-6 px-4 py-2 bg-green-900/40 border border-green-600/40 text-green-400 rounded font-mono text-sm hover:bg-green-800/50 transition-colors"
-                      onClick={() => setCurrentApp('ending')}
-                    >
-                      {'>>> 进入终局决策界面'}
-                    </button>
                   )}
                 </>
               ) : (
@@ -726,7 +680,6 @@ export function Desktop() {
                         <Image className="w-16 h-16 text-zinc-500 mx-auto mb-4" />
                         <p className="text-sm text-zinc-300">两个人在路边摊吃饭。</p>
                         <p className="text-sm text-zinc-300 mt-2">林晓在笑，但眼睛下面有很深的阴影。</p>
-                        <p className="text-xs text-zinc-500 mt-4">那种笑容，像是怕你看出什么。</p>
                       </div>
                     </div>
                   )}
@@ -739,7 +692,6 @@ export function Desktop() {
                         </div>
                         <p className="text-sm text-zinc-300">林晓发给林浩的手机截图。</p>
                         <p className="text-sm text-zinc-400 mt-2">只配了一个句号：<span className="text-zinc-300">。</span></p>
-                        <p className="text-xs text-zinc-500 mt-4">凌晨三点四十七分，她还醒着。</p>
                       </div>
                     </div>
                   )}
@@ -763,7 +715,6 @@ export function Desktop() {
                           <p className="text-sm text-gray-800">贵不贵？我帮你出</p>
                         </div>
                         <p className="text-sm text-zinc-300 mt-2">林浩的回复截图。</p>
-                        <p className="text-xs text-zinc-500 mt-4">他一直想帮忙。</p>
                       </div>
                     </div>
                   )}
@@ -774,7 +725,6 @@ export function Desktop() {
                           <p className="text-sm text-gray-800">不用，我自己来。</p>
                         </div>
                         <p className="text-sm text-zinc-300 mt-2">林晓的回复。</p>
-                        <p className="text-xs text-zinc-500 mt-4">她从来不让别人帮忙。</p>
                       </div>
                     </div>
                   )}
@@ -786,9 +736,7 @@ export function Desktop() {
                         </div>
                         <p className="text-[10px] text-gray-400 mt-1">已送达</p>
                         <p className="text-sm text-zinc-300 mt-4">林浩发出的最后一条消息。</p>
-                        <p className="text-sm text-zinc-400 mt-2">显示"已送达"。</p>
                         <p className="text-sm text-red-400/60 mt-2">没有已读。</p>
-                        <p className="text-xs text-zinc-600 mt-4">从此以后，再也没有了。</p>
                       </div>
                     </div>
                   )}
@@ -1017,7 +965,6 @@ function MedicalRecord() {
                 <p>主治医师：林德坤</p>
                 <p>诊断：顽固性失眠症</p>
               </div>
-              <div className="mt-4 text-[10px] text-gray-400">（点击翻转查看背面）</div>
             </div>
           </div>
           {/* 背面 */}
@@ -1029,15 +976,12 @@ function MedicalRecord() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
-// ── 日历组件（3月13日黑叉 = RUNE_07）──
+// ── 日历组件 ──
 function CalendarWidget() {
-  const { collectRune, hasRune } = useGame();
-  const rune07Collected = hasRune('RUNE_07');
-
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
@@ -1050,29 +994,19 @@ function CalendarWidget() {
         {/* 3月1日是周五，前面补4个空格 */}
         {Array.from({ length: 5 }).map((_, i) => <div key={`pad-${i}`} />)}
         {days.map(day => (
-          <button
+          <div
             key={day}
             className={`py-1.5 rounded text-zinc-400 transition-colors relative
-              ${day === 13 ? 'bg-red-900/40 text-red-400 font-bold hover:bg-red-800/50' : 'hover:bg-zinc-800'}
+              ${day === 13 ? 'bg-red-900/40 text-red-400 font-bold' : 'hover:bg-zinc-800'}
               ${day === 14 ? 'ring-1 ring-blue-500/50' : ''}`}
-            onClick={() => {
-              if (day === 13 && !rune07Collected) {
-                collectRune('RUNE_07');
-              }
-            }}
           >
             {day}
             {day === 13 && (
               <X className="w-3 h-3 absolute top-0 right-0 text-red-500" />
             )}
-          </button>
+          </div>
         ))}
       </div>
-      {rune07Collected && (
-        <div className="mt-3 text-center text-amber-600/60 text-xs font-serif">
-          ☰ 3月13日……一切终结之日
-        </div>
-      )}
     </div>
   );
 }

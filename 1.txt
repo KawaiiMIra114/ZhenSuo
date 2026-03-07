@@ -1,0 +1,240 @@
+我会继续按你这份清单直接落地修复代码。先快速检查当前变更状态和关键文件，确认上次只改了哪些，再逐项实现并做一次构建验证。
+
+已运行 git status --short
+
+
+已运行 rg -n "forum_url_discovered|oa_url_discovered|oa_maintenance_log_read|mnt-8023|mnt8023|investigate-highlight|IntersectionObserver|Shift\+Enter|Ctrl\+Enter|forum\.tranquil-sleep\.com|linXiaoSignalStrength|Math\.min|RUNE_02|B1|B2|b2_report|shadow_archive_path_found|meridian_suspicious|toString\(\)|ReactNode" src
+
+
+已运行 git diff -- src/components/Browser.tsx src/pages/OA.tsx src/pages/Forum.tsx src/pages/Clinic.tsx src/pages/Desktop.tsx src/GameContext.tsx src/components/ShutdownSequence.tsx src/pages/Ending.tsx src/data/runeStories.ts src/index.css
+
+
+已运行 Get-Content -Path src/pages/OA.tsx -TotalCount 260
+
+
+我已经拿到现状：论坛门槛和部分链路改动已经在代码里了，但还有多项未完成或实现方式不一致。下一步我会逐文件核对并补齐你指定的触发方式（尤其滚动触发、样式、验证码、时钟/输入逻辑、柔和模式与持久化）。
+
+已运行 Select-String -Path "src\pages\Forum.tsx" -Pattern "oa_url_discovered|oa_maintenance_log_read|forum_url_discovered|IntersectionObserver|README|RUNE_07|toString\(|filter\(|search|发布地|mnt0313|mnt-8023-zq|mnt8023_zq" -Context 2,4
+
+
+已运行 Select-String -Path "src\pages\OA.tsx" -Pattern "mnt8023_zq|mnt-8023-zq|b2Unlocked|localStorage|IntersectionObserver|oa_maintenance_log_read|RUNE_05|maintenance|mnt-8023 / zq|placeholder|B2|验证码" -Context 2,4
+
+
+已运行 Select-String -Path "src\pages\Clinic.tsx" -Pattern "forum_url_discovered|hover|setTimeout|IntersectionObserver|article_d4_ending|faq|FAQ|source|RUNE_02|clinic_source_code|onMouseEnter|InvestigateNode" -Context 2,4
+
+
+已运行 Select-String -Path "src\pages\Desktop.tsx" -Pattern "Ctrl\+Enter|Shift\+Enter|Date\(|toLocale|forum\.tranquil-sleep.com|defaultUrl|Browser|清除进度并重启|focusTick|zIndex|Monitor|forum" -Context 2,4
+
+
+已运行 Select-String -Path "src\GameContext.tsx" -Pattern "linXiaoSignalStrength|boost|Math\.min|localStorage|b2|report|resetGame|STORAGE_KEY|discoveredFacts|setLinXiaoSignalStrength" -Context 2,3
+
+
+已运行 Select-String -Path "src\components\ShutdownSequence.tsx","src\pages\Ending.tsx","src\index.css","src\data\runeStories.ts" -Pattern "gentle|柔和|flash|red|RUNE_02|B1|B2|investigate-highlight|signal" -Context 2,4
+
+
+已运行 Get-Content -Path src/components/InvestigateNode.tsx -TotalCount 260
+
+
+已运行 Get-Content -Path src/components/DraggableWindow.tsx -TotalCount 260
+
+
+已运行 Get-Content -Path src/components/ShutdownSequence.tsx -TotalCount 260
+
+
+已运行 Get-Content -Path src/pages/Ending.tsx -TotalCount 420
+
+
+已运行 Get-Content -Path src/pages/Ending.tsx | Select-Object -Skip 420 -First 220
+
+
+已运行 Get-Content -Path src/index.css -TotalCount 260
+
+
+已运行 Get-Content -Path src/components/Browser.tsx -TotalCount 260
+
+
+已运行 Select-String -Path src/components/Browser.tsx -Pattern "isDarkZone" -Context 1,1
+
+
+已运行 Get-Content -Path src/pages/Forum.tsx | Select-Object -First 260
+
+
+已运行 Get-Content -Path src/pages/Forum.tsx | Select-Object -Skip 260 -First 260
+
+
+已运行 Get-Content -Path src/pages/Forum.tsx | Select-Object -Skip 520 -First 280
+
+
+已运行 Get-Content -Path src/pages/OA.tsx | Select-Object -First 240
+
+
+已运行 Get-Content -Path src/pages/OA.tsx | Select-Object -Skip 300 -First 260
+
+
+已运行 Get-Content -Path src/pages/Desktop.tsx | Select-Object -First 280
+
+
+已运行 Get-Content -Path src/pages/Desktop.tsx | Select-Object -Skip 480 -First 140
+
+
+已运行 Get-Content -Path src/pages/Desktop.tsx | Select-Object -Skip 820 -First 170
+
+
+已运行 Get-Content -Path src/GameContext.tsx -TotalCount 280
+
+
+已运行 Select-String -Path src\**\*.tsx -Pattern "admin_oa_url_discovery|oa_logs_hidden|shadow_readme_rune07|faq_forum_url|b2_report_unlocked|forum_url_discovered"
+
+
+已运行 Select-String -Path src\**\*.tsx -Pattern "faq_forum_url"
+
+
+我已经核对完代码现状，接下来按你的清单一次性补齐，顺序如下：
+
+先修 P1：investigate-highlight 样式、论坛 OA 地址改“进入视口触发”、OA 日志与 Shadow README 的 RUNE 改滚动触发。
+再修 P2：FAQ 悬浮阈值写 Fact、B2 验证码改 mnt-8023-zq 并持久化、系统时钟固定 2024-03-14 03:47、微信提示文案改 Shift+Enter、论坛默认域名统一。
+最后修 P2/P3 收尾：柔和模式在关机序列和结局A生效、信号强度上限 7、RUNE_02 文案 B1→B2、论坛搜索去掉 content.toString() 假搜索。
+我会改完后跑一次构建并把关键点和你要的链路输出一起贴出。
+已编辑
+index.css
++24
+-3
+已编辑
+GameContext.tsx
++5
+-5
+已编辑
+runeStories.ts
++1
+-1
+已编辑
+Desktop.tsx
++14
+-21
+已编辑
+ShutdownSequence.tsx
++20
+-20
+已编辑
+Ending.tsx
++17
+-9
+我开始改 Clinic：把 FAQ 论坛地址从“点击记录”改成“悬浮达到阈值自动记录”，并保持已有线索体系（readHook/addFact）不丢失。紧接着会继续处理 OA/Forum 的滚动触发。
+
+已编辑
+Clinic.tsx
++38
+-13
+已编辑
+Forum.tsx
++77
+-22
+已运行 Select-String -Path src/pages/OA.tsx -Pattern "collectRune|hasRune|hasReadHook|oa_logs_hidden|b2_report_unlocked|setB2Unlocked|b2Unlocked" -Context 0,0
+
+
+已编辑
+OA.tsx
++50
+-23
+我正在补最后几处交互细节：把微信输入行为严格对齐为“Enter发送、Shift+Enter换行”，并继续检查 OA/Forum 的滚动触发与持久化是否都走统一逻辑。
+
+已编辑
+Desktop.tsx
++7
+-5
+已运行 Get-Content -Path src/types.ts -TotalCount 320
+
+
+核心改动已经基本落地，正在做收尾自检：我会先跑一次构建，确认没有类型/语法回归，再把每一条对应到你的清单给你复核。
+
+已运行 npm run build（3s）
+
+
+已运行 Select-String -Path "src\pages\Forum.tsx","src\pages\OA.tsx" -Pattern "oa_url_discovered|oa_maintenance_log_read"
+
+
+已运行 git diff -- src/components/Browser.tsx src/pages/Clinic.tsx src/pages/Forum.tsx src/pages/OA.tsx src/pages/Desktop.tsx src/components/ShutdownSequence.tsx src/pages/Ending.tsx src/GameContext.tsx src/index.css src/data/runeStories.ts
+
+
+已运行 git status --short
+
+
+已运行 Select-String -Path src\**\*.tsx -Pattern "bbs\.tranquil-sleep\.com|forum\.tranquil-sleep\.com/bbs|Ctrl \+ Enter|Shift\+Enter"
+
+
+已编辑
+index.css
++2
+-0
+我把 investigate-highlight 又补了兼容回退色，避免 color-mix 不支持时线索下划线消失。现在再跑一遍构建做最终确认。
+
+已运行 npm run build（3s）
+
+
+已运行 Select-String -Path "src\pages\Forum.tsx","src\pages\OA.tsx" -Pattern "oa_url_discovered|oa_maintenance_log_read"
+
+
+已处理 10m 5s
+已按你这版清单完成修复，并且构建通过。
+
+已修复
+
+论坛门槛生效：访问论坛 URL 时强制检查 forum_url_discovered。
+文件：Browser.tsx
+
+管理员链路循环已切断并改为可达：
+p3(工号线索) → 管理员登录 → 内部通讯进入视口自动写入 oa_url_discovered → OA 可登录。
+文件：Forum.tsx, OA.tsx
+
+investigate-highlight 样式已补齐（含兼容回退色）。
+文件：index.css
+
+点击触发改滚动触发（复用现有 InvestigateNode 逻辑）：
+
+OA 日志底部 RUNE_05
+Shadow README 底部 RUNE_07
+实现方式是 IntersectionObserver + target.click()，直接走统一碎片收集流程。
+文件：OA.tsx, Forum.tsx
+FAQ 论坛地址改为“悬浮达到阈值自动写 Fact”，不再要求点击。
+文件：Clinic.tsx
+
+B2 验证码改为 mnt-8023-zq，并持久化为 Fact（b2_report_unlocked）。
+文件：OA.tsx
+
+系统托盘时间固定为游戏内时间 2024-03-14 03:47（不再读取机器时间）。
+文件：Desktop.tsx
+
+微信输入逻辑改为：Enter 发送，Shift+Enter 换行；提示文案同步。
+文件：Desktop.tsx
+
+论坛域名统一为 forum.tranquil-sleep.com/bbs（浏览器默认地址已同步）。
+文件：Desktop.tsx, Clinic.tsx
+
+柔和模式补齐：
+
+关机序列林晓三句改柔和淡入淡出
+终局 A 的血红文本在柔和模式下改灰色
+文件：ShutdownSequence.tsx, Ending.tsx
+信号强度加上限 7。
+文件：GameContext.tsx
+
+RUNE_02 文案已从 B1 改为 B2。
+文件：runeStories.ts
+
+论坛搜索移除 ReactNode.toString() 假正文匹配，改为标题/作者匹配。
+文件：Forum.tsx
+
+你要的命令输出
+
+Select-String -Path "src\pages\Forum.tsx","src\pages\OA.tsx" -Pattern "oa_url_discovered|oa_maintenance_log_read"
+
+src\pages\Forum.tsx:239:            // 旧逻辑依赖 oa_maintenance_log_read，会与 OA 登录形成环依赖。
+src\pages\Forum.tsx:322:        if (hasFact('oa_url_discovered')) return;
+src\pages\Forum.tsx:327:            addFact('oa_url_discovered');
+src\pages\Forum.tsx:336:                addFact('oa_url_discovered');
+src\pages\OA.tsx:29:    if (!hasFact('oa_url_discovered')) {
+src\pages\OA.tsx:184:                onClick={() => { setView('logs'); addFact('oa_maintenance_log_read'); }}
+验证
+
+已执行：npm run build
+结果：通过（Vite build success）

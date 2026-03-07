@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../GameContext';
 import { InvestigateNode } from '../components/InvestigateNode';
 import {
@@ -29,7 +29,7 @@ interface ForumPost {
 }
 
 export function Forum() {
-    const { collectRune, hasRune, readHook, forumAccess, setForumAccess, addFact, hasFact } = useGame();
+    const { readHook, hasReadHook, hasRune, forumAccess, setForumAccess, addFact, hasFact } = useGame();
 
     const [activeTab, setActiveTab] = useState<'posts' | 'member' | 'admin' | 'shadow'>('posts');
     const [searchQuery, setSearchQuery] = useState('');
@@ -45,6 +45,8 @@ export function Forum() {
 
     const [shadowPath, setShadowPath] = useState('');
     const [shadowError, setShadowError] = useState('');
+    const adminOaNoticeRef = useRef<HTMLParagraphElement | null>(null);
+    const shadowReadmeRuneRef = useRef<HTMLDivElement | null>(null);
 
     // 扩展折叠状态
     const [expandedCollapsedPosts, setExpandedCollapsedPosts] = useState<Record<string, boolean>>({});
@@ -123,6 +125,7 @@ export function Forum() {
             replies: 1,
             content: (
                 <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+                    <p className="text-xs text-gray-500">发布地：南郊（NJ）</p>
                     <p>最近值班的时候听到地下有奇怪的声音，</p>
                     <p>不知道是不是暖通系统的问题。</p>
                     <p>有其他工作人员也注意到了吗？</p>
@@ -232,15 +235,15 @@ export function Forum() {
 
     const handleAdminLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (adminUser.trim() === 'bbs_admin' && adminPass.trim() === 'nj0313') {
-            if (hasFact('oa_maintenance_log_read')) {
+        if (adminUser.trim() === 'bbs_admin' && adminPass.trim() === 'mnt0313') {
+            // 管理员入口在 UI 上只对完成会员认证的玩家可见，前置条件与之保持一致。
+            if (hasFact('forum_member_registered')) {
                 setForumAccess('admin');
                 setAdminError('');
                 readHook('forum_admin_logged_in');
-                addFact('oa_url_discovered'); // 管理员通讯中暴露内网OA地址
                 addFact('admin_unlocked'); // V4 §5.6 必须在验证通过后赋予此管理员通行Fact
             } else {
-                setAdminError('密码正确，但您的会话状态异常，请重新登录。');
+                setAdminError('密码正确，但会话上下文不足。请先完成会员认证。');
             }
         } else {
             setAdminError('管理员凭证错误。');
@@ -294,7 +297,7 @@ export function Forum() {
             customSearchMsg = "[1条相关内容因包含受限词汇已被自动处理]";
         } else {
             displayedPosts = posts.filter(p =>
-                p.title.includes(activeSearch) || p.author.includes(activeSearch) || p.content?.toString().includes(activeSearch)
+                p.title.includes(activeSearch) || p.author.includes(activeSearch)
             );
         }
     } else if (activeTab === 'member' && forumAccess !== 'public') {
@@ -303,6 +306,68 @@ export function Forum() {
 
     const allPosts = [...posts, ...memberPosts];
     const currentPostObj = allPosts.find(p => p.id === selectedPost);
+
+    // 看到前台工号帖（p3）即自动记录 8023 线索，不强制搜索
+    useEffect(() => {
+        if (selectedPost === 'p3') {
+            addFact('employee_8023_known');
+        }
+    }, [selectedPost, addFact]);
+
+    // 管理员内部通讯中的 OA 地址：阅读进入视口即记录，不要求点击
+    useEffect(() => {
+        if (activeTab !== 'admin') return;
+        if (!(forumAccess === 'admin' || forumAccess === 'shadow')) return;
+        if (hasFact('oa_url_discovered')) return;
+        const target = adminOaNoticeRef.current;
+        if (!target) return;
+
+        if (!('IntersectionObserver' in window)) {
+            addFact('oa_url_discovered');
+            readHook('admin_oa_url_discovery');
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const entry = entries[0];
+                if (!entry || !entry.isIntersecting) return;
+                addFact('oa_url_discovered');
+                readHook('admin_oa_url_discovery');
+                observer.disconnect();
+            },
+            { threshold: 0.5 }
+        );
+
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [activeTab, forumAccess, hasFact, addFact, readHook]);
+
+    // README 底部线索改为滚动触发，复用 InvestigateNode 的点击收集流程
+    useEffect(() => {
+        if (activeTab !== 'shadow' || forumAccess !== 'shadow' || selectedPost !== 'shadow_readme') return;
+        if (hasReadHook('shadow_readme_rune07') || hasRune('RUNE_07')) return;
+        const target = shadowReadmeRuneRef.current;
+        if (!target) return;
+
+        if (!('IntersectionObserver' in window)) {
+            target.click();
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const entry = entries[0];
+                if (!entry || !entry.isIntersecting) return;
+                target.click();
+                observer.disconnect();
+            },
+            { threshold: 0.45 }
+        );
+
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [activeTab, forumAccess, selectedPost, hasReadHook, hasRune]);
 
     return (
         <div className="min-h-screen bg-[#f4f5f7] text-gray-800 font-sans">
@@ -553,6 +618,11 @@ export function Forum() {
                                         <p className="font-semibold text-gray-800 mb-3">主题：RE:本周违规内容处理汇报</p>
                                         <p className="mb-2 text-gray-700">贵部门要求处理的帖子（ID:7821-7824）已完成折叠。</p>
                                         <p className="mb-2 text-gray-700 leading-relaxed">另：关于"声音"和"气味"两个关键词，本月触发频率已达237次，较上月增加约91次。建议贵部门评估是否需要更新设备维护说明，以便向可能询问的员工作出技术性解释。</p>
+                                        <p ref={adminOaNoticeRef} className="mb-2 text-gray-700 leading-relaxed">
+                                            后续舆情工单请统一切换至内网系统：
+                                            <span className="font-semibold text-indigo-700 mx-1">oa.tranquil-sleep.com</span>
+                                            ，勿继续通过外网邮箱流转。
+                                        </p>
                                         <p className="mb-4 text-gray-700">此为例行汇报，无需回复。</p>
                                         <p className="text-gray-700">赵</p>
                                     </div>
@@ -653,7 +723,7 @@ export function Forum() {
 
                                                 {/* MNT RUNE 07 BACKUP — 滚动至底部发现 */}
                                                 <InvestigateNode hookId="shadow_readme_rune07" runeId="RUNE_07">
-                                                    <div className="mt-32 pt-12 border-t border-green-950 text-xs text-green-800 opacity-20 hover:opacity-100 transition-opacity duration-[3000ms] cursor-default">
+                                                    <div ref={shadowReadmeRuneRef} className="mt-32 pt-12 border-t border-green-950 text-xs text-green-800 opacity-20 hover:opacity-100 transition-opacity duration-[3000ms] cursor-default">
                                                         <p>妈，你不用担心我。</p>
                                                         <p className="mt-2">我在处理一件事，处理完就回来。</p>
                                                         <p className="mt-2">家里那台空调过滤网该换了，你别自己爬上去换，</p>
@@ -666,7 +736,7 @@ export function Forum() {
                                     )}
 
                                     {selectedPost === 'shadow_7829' && (
-                                        <InvestigateNode hookId="forum_rune_07">
+                                        <InvestigateNode hookId="forum_rune_07" runeId="RUNE_07">
                                             <div className="animate-pulse-fast">
                                                 <p className="text-green-300 font-bold mb-4 border-b border-green-900/50 pb-2 inline-block">post_7829_complete.txt</p>
                                                 <div className="bg-green-950/20 p-4 border border-green-900/30 rounded mb-6 text-sm text-green-600">
@@ -728,15 +798,10 @@ export function Forum() {
                                                         >
                                                             {expandedCollapsedPosts[post.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                                             <span className="text-sm border border-gray-300 px-2 py-0.5 rounded bg-gray-50">{post.title}</span>
-                                                            <span className="text-xs ml-auto">本内容需要手动展开</span>
                                                         </button>
                                                         {expandedCollapsedPosts[post.id] && (
-                                                            <div
-                                                                className="mt-3 ml-6 pl-4 border-l-2 border-red-200 cursor-pointer hover:bg-red-50/50 p-2 rounded transition-colors"
-                                                                onClick={() => setSelectedPost(post.id)}
-                                                            >
-                                                                <p className="text-xs text-red-500/70 uppercase tracking-widest mb-1 font-semibold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vio_Content_Detected</p>
-                                                                <p className="text-sm text-gray-600 line-clamp-2">点击查看被折叠内容的完整备份记录……</p>
+                                                            <div className="mt-3 ml-6 pl-4 border-l-2 border-red-200 bg-red-50/30 p-2 rounded">
+                                                                {post.content}
                                                             </div>
                                                         )}
                                                     </div>

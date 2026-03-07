@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../GameContext';
 import { InvestigateNode } from '../components/InvestigateNode';
 import { FileText, Camera, BookOpen, Users, Server, Lock } from 'lucide-react';
@@ -8,7 +8,7 @@ type OAView = 'login' | 'dashboard' | 'purchase' | 'personnel' | 'logs' | 'b2rep
 export function OA() {
   const {
     isOALoggedIn, setOALoggedIn,
-    readHook, collectRune,
+    readHook, hasReadHook, hasRune,
     addFact, hasFact,
   } = useGame();
 
@@ -19,7 +19,9 @@ export function OA() {
 
   const [b2AuthCode, setB2AuthCode] = useState('');
   const [b2AuthError, setB2AuthError] = useState('');
-  const [b2Unlocked, setB2Unlocked] = useState(false);
+  const b2Unlocked = hasFact('b2_report_unlocked');
+  const logsRuneTriggerRef = useRef<HTMLDivElement | null>(null);
+  const notebookFactTriggerRef = useRef<HTMLParagraphElement | null>(null);
 
   // V4 Login Logic
   const handleLogin = (e: React.FormEvent) => {
@@ -45,13 +47,67 @@ export function OA() {
 
   const handleB2Auth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (b2AuthCode === 'mnt8023_zq') {
-      setB2Unlocked(true);
+    if (b2AuthCode.trim().toLowerCase() === 'mnt-8023-zq') {
+      addFact('b2_report_unlocked');
       setB2AuthError('');
     } else {
       setB2AuthError('验证码无效。');
     }
   };
+
+  // OA 日志底部线索改为滚动触发，复用 InvestigateNode 的统一收集流程
+  useEffect(() => {
+    if (view !== 'logs') return;
+    if (hasReadHook('oa_logs_hidden') || hasRune('RUNE_05')) return;
+    const target = logsRuneTriggerRef.current;
+    if (!target) return;
+
+    if (!('IntersectionObserver' in window)) {
+      target.click();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry || !entry.isIntersecting) return;
+        target.click();
+        observer.disconnect();
+      },
+      { threshold: 0.4 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [view, hasReadHook, hasRune]);
+
+  // 系统备注中的终局口令线索：阅读到关键句时再写入 Fact
+  useEffect(() => {
+    if (view !== 'notebook') return;
+    if (hasFact('password_half_juku_found') && hasFact('password_instructions_found')) return;
+    const target = notebookFactTriggerRef.current;
+    if (!target) return;
+
+    if (!('IntersectionObserver' in window)) {
+      addFact('password_half_juku_found');
+      addFact('password_instructions_found');
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry || !entry.isIntersecting) return;
+        addFact('password_half_juku_found');
+        addFact('password_instructions_found');
+        observer.disconnect();
+      },
+      { threshold: 0.55 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [view, hasFact, addFact]);
 
   if (view === 'login') {
     return (
@@ -175,7 +231,7 @@ export function OA() {
                 icon={<FileText />}
                 title="[6] 系统备注"
                 desc="供维护人员记录临时备注"
-                onClick={() => { setView('notebook'); addFact('password_half_juku_found'); addFact('password_instructions_found'); }}
+                onClick={() => setView('notebook')}
               />
             </div>
           </div>
@@ -338,12 +394,13 @@ export function OA() {
               <LogEntry date="2024-03-11" content="继续调查。发现7号柜的实际功率已经飙到7000kW——整栋楼的变压器容量才6.5MW，光一台柜子就吃掉了超过100%。这在物理上不可能，除非供电系统有问题，或者功率计的读数是假的。但我亲手测的电流是真的。这里面到底跑的是什么？" />
               <LogEntry date="2024-03-12" content="半夜又去了B2。打开了7号柜的侧面检修面板——看见里面的管道在抖。不是震动，是那种……脉搏一样的节奏性蠕动。液冷管道里流的不像是冷却液，颜色偏暗。写了邮件给主管，抄送院务委。" />
 
-              <div className="bg-red-950/20 border border-red-900/50 p-4 rounded">
+                <div className="bg-red-950/20 border border-red-900/50 p-4 rounded">
                 <p className="text-red-500/80 text-xs mb-2">2024-03-13</p>
                 <div className="text-red-400 space-y-2">
                   <p>所有邮件都被退回了。公司邮箱被冻结。门禁卡B2层权限被撤销。</p>
                   <p>下午被叫去"谈话"。行政主任说我"过度解读技术参数"。让我签一份NDA。我没签。</p>
                   <p>晚上10点——护士又来了，端着那杯"褪黑素"。这次我没喝。我趁她走后把杯子倒进了样本瓶。明天送检。</p>
+                  <p>今天是3月13日。我把这个日期记下来，以免有人替我改日志。</p>
                 </div>
               </div>
 
@@ -357,7 +414,7 @@ export function OA() {
               </div>
 
               <InvestigateNode hookId="oa_logs_hidden" runeId="RUNE_05">
-                <div className="bg-black border border-green-900/40 p-8 shadow-2xl mt-12">
+                <div ref={logsRuneTriggerRef} className="bg-black border border-green-900/40 p-8 shadow-2xl mt-12">
                   <p className="text-green-500/60 mb-6 font-mono text-xs">——————</p>
                   <p className="text-green-400 font-bold mb-4">如果你在读这个，说明你进来了。</p>
                   <p className="text-green-300 mb-2">OA里的B2报告才是重点。</p>
@@ -530,9 +587,9 @@ export function OA() {
                 <p>影子档案建好了，东西都在里面。</p>
                 <p>这里有七个碎片，我数过了。</p>
                 <p className="mt-8 text-white font-bold bg-green-900/30 px-2 py-1 inline-block">如果有人把它们都找到了，</p><br />
-                <p className="text-white font-bold bg-green-900/30 px-2 py-1 inline-block">用"太乙救苦"的完整拼音打开终局。</p>
+                <p ref={notebookFactTriggerRef} className="text-white font-bold bg-green-900/30 px-2 py-1 inline-block">用"太乙救苦"的完整拼音打开终局。</p>
                 <p className="mt-8">加油。</p>
-                <p className="mt-8 text-green-600">——mnt-8023</p>
+                <p className="mt-8 text-green-600">——mnt-8023 / zq</p>
               </div>
             </div>
           </div>

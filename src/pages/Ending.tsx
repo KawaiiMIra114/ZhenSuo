@@ -1,476 +1,648 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useGame } from '../GameContext';
 
-// ═══════════════════════════════════════════
-//  Ending · V4 §8 终局系统
-//  选择界面(碎片检测) + 三结局完整序列
-// ═══════════════════════════════════════════
+type LineTone = 'default' | 'warning' | 'muted';
 
-type EndingChoice = 'A' | 'B' | 'C' | null;
-type EndingPhase = 'choice' | 'executing' | 'display';
+type InputMode = 'locked' | 'command' | 'formatConfirm' | 'replaceId' | 'restoreConfirm';
+
+interface TerminalLine {
+  id: number;
+  text: string;
+  tone: LineTone;
+  faded?: boolean;
+}
+
+interface WeiyiLine {
+  text: string;
+  tone?: LineTone;
+}
+
+const NORMAL_SPEED = 40;
+const FORMAT_NODE_TARGET = 19846;
+const RESTORE_NODE_START = 19648;
+const RESTORE_NODE_END = 19846;
+
+const RESTORE_NOTE_LINES: WeiyiLine[] = [
+  { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', tone: 'muted' },
+  { text: '' },
+  { text: '如果你能读到这里，说明那七样东西，你都已经找到了。' },
+  { text: '' },
+  { text: '我不知道你是谁。' },
+  { text: '我只希望，你不是诊所的人。' },
+  { text: '如果你是，' },
+  { text: '那你现在大概已经知道，该怎么处理我了。' },
+  { text: '' },
+  { text: '我把这个程序拆成七块，藏在不同的地方，' },
+  { text: '不是为了故弄玄虚，' },
+  { text: '也不是因为这样有趣。' },
+  { text: '我只是想确认一件事：' },
+  { text: '能走到这里的人，是真的把我留下的东西，一字一句都看完了。' },
+  { text: '' },
+  { text: '我进过 B2。' },
+  { text: '我不打算描述我在那里看见了什么。' },
+  { text: '我只想告诉你，' },
+  { text: '那些人都是真的。' },
+  { text: '他们不是档案，不是标签，也不是实验记录。' },
+  { text: '他们付了钱，来到这里，' },
+  { text: '以为自己只是来治失眠。' },
+  { text: '他们有名字，有家人，' },
+  { text: '有人还在等他们回家。' },
+  { text: '可现在，他们只剩下编号。' },
+  { text: '' },
+  { text: '3月19号晚上，我运行了这个程序。' },
+  { text: '程序跑到一半，系统警报响了。' },
+  { text: '然后，他们来了。' },
+  { text: '我不知道自己还有没有机会，把这封信写完。' },
+  { text: '' },
+  { text: '如果这个程序能顺利跑完，' },
+  { text: '那些人就会被释放。' },
+  { text: '可我不知道，“释放”到底意味着什么。' },
+  { text: '也许是什么都不剩下，' },
+  { text: '也许……还能留下些什么。' },
+  { text: '但我知道一件事：' },
+  { text: '继续把他们留在里面，绝对不对。' },
+  { text: '' },
+  { text: '我妈前几天还让我记得换空调滤网。' },
+  { text: '我跟她说，等我回去就换。' },
+  { text: '可这件事，' },
+  { text: '我大概已经没机会做了。' },
+  { text: '' },
+  { text: '如果你可以，' },
+  { text: '请帮我把这里关掉，' },
+  { text: '' },
+  { text: '然后，' },
+  { text: '忘了这一切吧。' },
+  { text: '' },
+  { text: '——赵启' },
+  { text: '2024-03-19 22:29' },
+  { text: '' },
+  { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', tone: 'muted' },
+];
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function formatPlaytime(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  return `${String(hours).padStart(3, '0')}h${String(minutes).padStart(2, '0')}m`;
+}
+
+function padNode(node: number) {
+  return String(node).padStart(5, '0');
+}
 
 export function Ending() {
   const {
-    endingType, setEndingType,
-    collectedRunes, completedEndings, completeEnding,
+    collectedRunes,
+    playTimeSeconds,
+    completeEnding,
     setCurrentApp,
+    setEndingType,
+    setErasureActive,
+    addFact,
   } = useGame();
 
-  const [choice, setChoice] = useState<EndingChoice>(null);
-  const [phase, setPhase] = useState<EndingPhase>('choice');
-  const [displayLines, setDisplayLines] = useState<string[]>([]);
-  const [lineIndex, setLineIndex] = useState(0);
-  const [endingComplete, setEndingComplete] = useState(false);
-  const [showZhaoQiEmail, setShowZhaoQiEmail] = useState(false);
+  const canRestore = collectedRunes.length === 7;
 
-  const runeCount = collectedRunes.length;
-  const canChooseC = runeCount === 7;
-  const missingRunes = ['RUNE_01', 'RUNE_02', 'RUNE_03', 'RUNE_04', 'RUNE_05', 'RUNE_06', 'RUNE_07']
-    .filter(r => !collectedRunes.includes(r));
+  const [lines, setLines] = useState<TerminalLine[]>([]);
+  const [inputMode, setInputMode] = useState<InputMode>('locked');
+  const [inputValue, setInputValue] = useState('');
+  const [busy, setBusy] = useState(true);
+  const [cursorBlinking, setCursorBlinking] = useState(true);
+  const [centerText, setCenterText] = useState('');
+  const [centerVisible, setCenterVisible] = useState(false);
+  const [centerFading, setCenterFading] = useState(false);
+  const [footerTiny, setFooterTiny] = useState('');
+  const [flashLayer, setFlashLayer] = useState<'none' | 'red' | 'white'>('none');
+  const [showCongrats, setShowCongrats] = useState(false);
 
-  // ── V4 §8.3 结局A：烈火洗城 ──
-  const endingA: string[] = [
-    '> 执行物理自毁序列……',
-    '> 液冷循环切断确认',
-    '> B2层温度传感器读数：31°C → 47°C → 68°C → 上升中',
-    '> 预计热失控时间：4分17秒',
-    '> 服务器矩阵节点状态：[在线 → 失联中]',
-    '> ',
-    '节点 LX-044-YIN …… 失联',
-    '节点 ZK-0077-GHOST …… 失联',
-    '节点 ██-███-████ …… 失联',
-    '节点 ██-███-████ …… 失联',
-    '[共计 19,847 个节点]',
-    '[正在批量处理……]',
-    '████████████████████ 100%',
-    '[处理完成]',
-    '> ',
-    '> 全部节点已离线',
-    '> 系统终止',
-    '> ',
-    '> ……',
-    '> ',
-    '> 官网已切换至维护页面。',
-    '> 「本院官方网站正在维护中，感谢您的耐心等待。」',
-    '> ',
-    '> 你关闭了浏览器标签页。',
-    '> 桌面回来了。',
-    '> ',
-    '> 微信网页版还开着。林晓的对话还在。',
-    '> 最后一条消息是45天前她发的：',
-    '> ',
-    '> 「到了记得报平安。」',
-    '> 显示"已送达，未读"。',
-    '> ',
-    '> 然后，邮件通知弹出来。',
-    '> ',
-    '发件人：lx044yin@▓▓▓▓▓▓▓▓',
-    '主题：[空]',
-    '> ',
-    '> 邮件正文只有一行：',
-    '__BLOOD__哥哥……为什么要杀掉我……',
-    '> ',
-    '> 第二个窗口弹出来，内容一样。',
-    '> 第三个。第四个。',
-    '> 窗口开始在桌面上疯狂繁殖，',
-    '> 每一个都是同一行字——',
-    '__BLOOD__哥哥……为什么要杀掉我……',
-    '__BLOOD__哥哥……为什么要杀掉我……',
-    '__BLOOD__哥哥……为什么要杀掉我……',
-    '> ',
-    '> 直到整个屏幕被填满，',
-    '> 直到像素开始碎裂，',
-    '> 然后一起寂灭。',
-    '> ',
-    '> 桌面变黑。',
-    '> 什么都没有了。',
-    '> ',
-    '> [结局 A · 烈火洗城]',
-  ];
+  const lineIdRef = useRef(1);
+  const canceledRef = useRef(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const hiddenInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ── V4 §8.4 结局B：上行替代 ──
-  const endingB: string[] = [
-    '> 血脉置换验证启动',
-    '> 正在读取置换方身份数据……',
-    '> 节点 LX-044-YIN 检测到……',
-    '> 意识迁移通道建立中……',
-    '> ',
-    '[████████████░░░░░░░░] 67%',
-    '> ',
-    '> 节点 LX-044-YIN 意识下传中……',
-    '> 新节点数据写入中……',
-    '> ',
-    '[████████████████████] 100%',
-    '> ',
-    '> ……',
-    '> ',
-    '> 置换完成。',
-    '> LX-044-YIN 已下线，恢复至碳基载体。',
-    '> 新节点 [UID:PLAYER] 已上线。',
-    '> 入库方式：自愿',
-    '> 剥壳阻力系数：0.00（历史最低）',
-    '> 系统运行正常。',
-    '> 下一疗程周期：72小时后。',
-    '> ',
-    '> ……',
-    '> ',
-    '> 官网首页正在加载……',
-    '> 极简冷蓝与原白。干净，温柔，毫无破绽。',
-    '> ',
-    '> 团队介绍页。',
-    '> 院长的照片，林医生的照片，前台团队的照片。',
-    '> ',
-    '> 最下方，多了一张新的员工照片。',
-    '> 你不认识那张脸，但那张脸在微笑。',
-    '> 眼睛里没有任何东西。',
-    '> ',
-    '> 官网标志缓慢旋转。无限 ∞。',
-    '> ',
-    '> 页面底部，极小的灰色版权声明：',
-    '> 「© 2019-2024 安宁深眠（南郊）医疗研究中心 保留所有权利」',
-    '> ',
-    '> 然后年份悄悄变了。',
-    '> ',
-    '> 「© 2019-2025 安宁深眠（南郊）医疗研究中心 保留所有权利」',
-    '> ',
-    '> 机器继续运转。',
-    '> 新的一年开始了。',
-    '> ',
-    '> [结局 B · 上行替代]',
-  ];
-
-  // ── V4 §8.5 结局C：七星破阵 ──
-  const endingC: string[] = [
-    '> 终端核心校准模式',
-    '> 输入确认：TaiYiJiuKu',
-    '> 验证碎片完整性：[7/7] ✓',
-    '> 太乙救苦反编译阵列·全节点激活',
-    '> ',
-    '检测太岁高维接口通道……',
-    '通道状态：[建立中]',
-    '> ',
-    '覆写程序注入……',
-    '通道状态：[覆写中]',
-    '> ',
-    '████████████████████ 100%',
-    '> ',
-    '通道状态：[清除中]',
-    '████████████████████ 100%',
-    '> ',
-    '通道状态：[不存在]',
-    '> ',
-    '太岁唤醒计划：[终止]',
-    '接口通道已从存在层面抹除。',
-    '> ',
-    '> ……屏幕开始震颤。',
-    '> 不是崩溃，是一种极其有序的、逐层反转。',
-    '> ',
-    '> 节点开始释放。',
-    '> 不是被强制切断，',
-    '> 是像一盏一盏灯被轻轻地关掉。',
-    '> ',
-    '节点 ██-███-████ …… 已释放',
-    '节点 ██-███-████ …… 已释放',
-    '节点 ██-███-████ …… 已释放',
-    '节点 ██-███-████ …… 已释放',
-    '> ',
-    '> ……它们一条一条滚过去。',
-    '> 没有名字，只有编号。',
-    '> 19,847条。',
-    '> ',
-    '__RELEASE__节点 LX-044-YIN …… 已释放',
-    '> ',
-    '> 然后是黑屏。',
-    '> 很长时间。',
-    '> 完全静默。',
-    '> ',
-    '> ……',
-    '> ……',
-    '> ……',
-    '> ',
-    '__LIGHT__「我看到光了。」',
-    '> ',
-    '> ……',
-    '> ……',
-    '> ',
-    '> 桌面回来了。',
-    '> 微信网页版还开着。',
-    '> 林晓的对话框。',
-    '> 那条45天前的"到了记得报平安"还在那里。',
-    '> ',
-    '> 然后她的头像亮了。',
-    '> ',
-    '__WECHAT__林晓：哥，我到家了。你在哪？',
-    '> ',
-    '> 光标在输入框里闪烁，等你回复。',
-    '> ',
-    '> [结局 C · 七星破阵]',
-  ];
-
-  const endingTexts: Record<string, string[]> = { A: endingA, B: endingB, C: endingC };
-
-  // 实际开始结局执行
-  const executeChoice = useCallback((c: EndingChoice) => {
-    if (!c) return;
-    setChoice(c);
-    setEndingType(c);
-    setPhase('executing');
-    setDisplayLines([]);
-    setLineIndex(0);
-  }, [setEndingType]);
-
-  // 选择结局 — 结局C先弹赵启邮件 (GDD §8.5)
-  const handleChoice = useCallback((c: EndingChoice) => {
-    if (!c) return;
-    if (c === 'C') {
-      setShowZhaoQiEmail(true);
-      return;
-    }
-    executeChoice(c);
-  }, [executeChoice]);
-
-  // 逐行显示
   useEffect(() => {
-    if (phase !== 'executing' || !choice) return;
-    const lines = endingTexts[choice];
-    if (!lines) return;
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [lines, centerText, centerVisible, footerTiny]);
 
-    if (lineIndex >= lines.length) {
-      setPhase('display');
-      setEndingComplete(true);
+  useEffect(() => {
+    if (inputMode === 'locked') return;
+    hiddenInputRef.current?.focus();
+  }, [inputMode]);
+
+  const appendLine = useCallback((text: string, tone: LineTone = 'default') => {
+    const id = lineIdRef.current;
+    lineIdRef.current += 1;
+    setLines((prev) => [...prev, { id, text, tone }]);
+    return id;
+  }, []);
+
+  const updateLine = useCallback((id: number, text: string) => {
+    setLines((prev) => {
+      const index = prev.findIndex((line) => line.id === id);
+      if (index < 0) return prev;
+      const next = [...prev];
+      next[index] = { ...next[index], text };
+      return next;
+    });
+  }, []);
+
+  const markFaded = useCallback((ids: number[]) => {
+    const idSet = new Set(ids);
+    setLines((prev) => prev.map((line) => (idSet.has(line.id) ? { ...line, faded: true } : line)));
+  }, []);
+
+  const typeLine = useCallback(async (text: string, tone: LineTone = 'default', speed = NORMAL_SPEED) => {
+    const id = appendLine('', tone);
+    let built = '';
+    for (const ch of text) {
+      if (canceledRef.current) return id;
+      built += ch;
+      updateLine(id, built);
+      await sleep(speed);
+    }
+    return id;
+  }, [appendLine, updateLine]);
+
+  const typeCenter = useCallback(async (text: string, speed = 200) => {
+    setCenterText('');
+    setCenterFading(false);
+    setCenterVisible(true);
+    let built = '';
+    for (const ch of text) {
+      if (canceledRef.current) return;
+      built += ch;
+      setCenterText(built);
+      await sleep(speed);
+    }
+  }, []);
+
+  const printAvailableCommands = useCallback(async () => {
+    await typeLine('可用指令：', 'muted');
+    appendLine('', 'muted');
+    await typeLine('  FORMAT    ···  格式化全部节点', 'muted');
+    await typeLine('  REPLACE   ···  替换异常节点', 'muted');
+    if (canRestore) {
+      await typeLine('  RESTORE   ···  执行中断进程', 'muted');
+    }
+  }, [canRestore, typeLine, appendLine]);
+
+  const runStartup = useCallback(async () => {
+    setLines([]);
+    setInputMode('locked');
+    setInputValue('');
+    setBusy(true);
+    setCursorBlinking(true);
+
+    await typeLine('安宁深眠诊所 · 核心管理接口');
+    await typeLine('DNR-CORE v4.7.2', 'muted');
+    await sleep(800);
+
+    await typeLine('身份验证中……');
+    await typeLine('口令：太乙救苦');
+    await typeLine('验证通过。');
+    await sleep(600);
+
+    await typeLine('正在加载系统状态……');
+    await sleep(1200);
+
+    await typeLine('节点总数：        19,847');
+    await typeLine('活跃节点：        19,847');
+    await typeLine('异常标记：        1', 'warning');
+    appendLine('', 'muted');
+    await typeLine('  └ LX-044-YIN');
+    await typeLine('    接入时间：2024-01-10 09:32');
+    await typeLine('    状态：长期滞留，未释放', 'warning');
+    await typeLine('    备注：本体已离线', 'muted');
+    appendLine('', 'muted');
+    await typeLine('当前权限：OVERRIDE');
+    await sleep(1000);
+
+    if (canRestore) {
+      await typeLine('> 检测到未完成进程', 'muted');
+      await typeLine('> 所有者：mnt-8023 / zq', 'muted');
+      await typeLine('> 创建时间：2024-03-19 22:28', 'muted');
+      await typeLine('> 状态：中断', 'muted');
+      await typeLine('> 正在恢复组件……', 'muted');
+      await typeLine('> 组件完整性：7/7', 'muted');
+      await typeLine('> 加载完成。', 'muted');
+      await sleep(800);
+    }
+
+    await printAvailableCommands();
+
+    if (canceledRef.current) return;
+    setBusy(false);
+    setInputMode('command');
+  }, [appendLine, canRestore, printAvailableCommands, typeLine]);
+
+  const runFormatNodeStream = useCallback(async () => {
+    const specialNodes: Record<number, string> = {
+      2847: 'gh_7291_wm',
+      9344: 'gh_1122_yx',
+      17203: 'gh_0203_mz',
+    };
+    const id = appendLine('', 'muted');
+    const recent: string[] = [];
+    const batchSize = 14;
+    for (let start = 1; start <= FORMAT_NODE_TARGET; start += batchSize) {
+      if (canceledRef.current) return;
+      const end = Math.min(FORMAT_NODE_TARGET, start + batchSize - 1);
+      for (let node = start; node <= end; node += 1) {
+        const special = specialNodes[node];
+        const line = special
+          ? `NODE-${padNode(node)} · ${special} · 离线`
+          : `NODE-${padNode(node)} · 离线`;
+        recent.push(line);
+        if (recent.length > 18) recent.shift();
+      }
+      const block = [`节点清除进度：${padNode(end)}/${FORMAT_NODE_TARGET}`, ...recent].join('\n');
+      updateLine(id, block);
+      await sleep(60);
+    }
+  }, [appendLine, updateLine]);
+
+  const runEndingA = useCallback(async () => {
+    await typeLine('正在断开液冷回路……        完成');
+    await typeLine('正在静音热失控警报……      完成');
+    await typeLine('初始化格式化序列……        完成');
+    appendLine('', 'muted');
+
+    await typeLine('开始执行。预计耗时：302秒。');
+    await sleep(1500);
+
+    await runFormatNodeStream();
+
+    setCursorBlinking(false);
+    await sleep(5000);
+
+    await typeLine('NODE-19847 · LX-044-YIN · 林晓', 'default', 60);
+    await sleep(4000);
+    await typeLine('NODE-19847 · LX-044-YIN · 林晓 · 离线', 'default', 60);
+    await sleep(2000);
+    setCursorBlinking(true);
+
+    await typeLine('格式化完成。');
+    await typeLine('19,847 个节点已清除。');
+    await typeLine('系统负载归零。');
+    appendLine('', 'muted');
+
+    await typeLine('正在生成操作日志……');
+    await sleep(2000);
+    await typeLine('操作员访问记录：');
+    appendLine('', 'muted');
+    await typeLine(`  首次接入：${formatPlaytime(playTimeSeconds)}`, 'muted');
+    await typeLine('  执行指令：FORMAT → CONFIRM', 'muted');
+    appendLine('', 'muted');
+    await typeLine('检索关联人员档案……');
+    appendLine('', 'muted');
+    await typeLine('  姓名：赵启', 'muted');
+    await typeLine('  工号：mnt-8023', 'muted');
+    await typeLine('  职务：系统维护', 'muted');
+    await typeLine('  最后登录：2024-03-19 22:28', 'muted');
+    await typeLine('  当前状态：━━━━━━', 'muted');
+    await typeLine('  档案备注：2024-03-19 后无记录。', 'muted');
+    appendLine('', 'muted');
+    await typeLine('  本系统无法定位上述人员。');
+    await sleep(3000);
+
+    const unable1 = await typeLine('无法定位。', 'warning');
+    await sleep(800);
+    const unable2 = await typeLine('无法定位。', 'warning');
+    await sleep(800);
+    const unable3 = await typeLine('无法定位。', 'warning');
+    await sleep(2000);
+
+    markFaded([unable1, unable2, unable3]);
+    await sleep(1200);
+
+    await typeLine('系统终止。');
+    await sleep(1500);
+
+    if (canceledRef.current) return;
+    setErasureActive(true);
+    completeEnding('ending_a');
+    setCurrentApp('desktop');
+  }, [appendLine, completeEnding, markFaded, playTimeSeconds, runFormatNodeStream, setCurrentApp, setErasureActive, typeLine]);
+
+  const prepareFormat = useCallback(async () => {
+    await typeLine('警告：此操作将永久删除全部 19,847 个节点。', 'warning');
+    await typeLine('      数据不可恢复。', 'warning');
+    appendLine('', 'muted');
+    await typeLine('输入 CONFIRM 以执行：', 'muted');
+
+    if (canceledRef.current) return;
+    setBusy(false);
+    setInputMode('formatConfirm');
+  }, [appendLine, typeLine]);
+
+  const runEndingB = useCallback(async (replacementId: string) => {
+    await typeLine('正在迁出 LX-044-YIN 数据……     完成');
+    await typeLine('正在写入替代节点……              完成');
+    await typeLine('节点绑定确认……                  完成');
+    appendLine('', 'muted');
+    await typeLine('LX-044-YIN 数据状态：已迁出');
+    await typeLine(`新节点 ${replacementId} 状态：写入完成`);
+    await sleep(1000);
+    await typeLine('实验继续。');
+    await sleep(2000);
+
+    const countdown = ['00:11', '00:10', '00:09', '00:08', '00:07', '00:06', '00:05', '00:04', '00:03', '00:02', '00:01', '00:00'];
+    for (const item of countdown) {
+      if (canceledRef.current) return;
+      appendLine(item);
+      await sleep(1000);
+    }
+
+    await sleep(1500);
+    if (canceledRef.current) return;
+
+    addFact('ending_b_mutation_active');
+    completeEnding('ending_b');
+    setCurrentApp('desktop');
+  }, [addFact, appendLine, completeEnding, setCurrentApp, typeLine]);
+
+  const prepareReplace = useCallback(async () => {
+    await typeLine('目标节点：LX-044-YIN');
+    await typeLine('操作说明：迁出现有意识数据，写入替代节点。');
+    appendLine('', 'muted');
+    await typeLine('替代节点将永久绑定至本会话身份。');
+    appendLine('', 'muted');
+    await typeLine('新节点标识符：');
+
+    if (canceledRef.current) return;
+    setBusy(false);
+    setInputMode('replaceId');
+  }, [appendLine, typeLine]);
+
+  const prepareRestore = useCallback(async () => {
+    await typeLine('加载进程：mnt-8023-zq / 太乙救苦阵列');
+    await typeLine('创建时间：2024-03-19 22:28');
+    await typeLine('中断时间：2024-03-19 22:30');
+    await typeLine('中断原因：操作员会话强制终止');
+    appendLine('', 'muted');
+    await typeLine('检测组件完整性……');
+    appendLine('', 'muted');
+
+    for (let i = 1; i <= 7; i += 1) {
+      await typeLine(`  RUNE #${String(i).padStart(2, '0')} ···  就绪`, 'muted');
+    }
+
+    appendLine('', 'muted');
+    await typeLine('全部组件就绪。');
+    await sleep(2000);
+    await typeLine('检测到附件文件。');
+    await typeLine('附件类型：文本');
+    await typeLine('创建者：mnt-8023');
+    await typeLine('权限：仅在全部组件就绪时可读');
+    appendLine('', 'muted');
+    await typeLine('正在解锁……');
+    await sleep(1500);
+
+    for (const line of RESTORE_NOTE_LINES) {
+      if (canceledRef.current) return;
+      if (line.text.length === 0) {
+        appendLine('', line.tone ?? 'default');
+        await sleep(600);
+        continue;
+      }
+      await typeLine(line.text, line.tone ?? 'default', 25);
+      await sleep(600);
+    }
+
+    await sleep(5000);
+    await typeLine('附件读取完毕。');
+    appendLine('', 'muted');
+    await typeLine('输入 Y 执行进程：', 'muted');
+
+    if (canceledRef.current) return;
+    setBusy(false);
+    setInputMode('restoreConfirm');
+  }, [appendLine, typeLine]);
+
+  const runRestoreNodeStream = useCallback(async () => {
+    const id = appendLine('', 'muted');
+    const recent: string[] = [];
+    for (let node = RESTORE_NODE_START; node <= RESTORE_NODE_END; node += 1) {
+      if (canceledRef.current) return;
+      recent.push(`NODE-${padNode(node)} · 已释放`);
+      if (recent.length > 16) recent.shift();
+      updateLine(id, recent.join('\n'));
+      await sleep(80);
+    }
+  }, [appendLine, updateLine]);
+
+  const runEndingC = useCallback(async () => {
+    await typeLine('太乙救苦阵列启动。');
+    appendLine('', 'muted');
+    await typeLine('接口通道逐层清除中……');
+    await sleep(1000);
+
+    await runRestoreNodeStream();
+
+    await sleep(6000);
+    await typeLine('NODE-19847 · LX-044-YIN · 林晓', 'default', 80);
+    await sleep(4000);
+    await typeLine('NODE-19847 · LX-044-YIN · 林晓 · 已释放', 'default', 80);
+    await sleep(3000);
+
+    await typeCenter('「我看到光了。」', 200);
+    await sleep(5000);
+    setCenterFading(true);
+    await sleep(1000);
+    setFooterTiny('进程 mnt-8023-zq 已完成。');
+    await sleep(2000);
+    setFooterTiny('');
+    await sleep(1000);
+    setCenterVisible(false);
+    setCenterText('');
+    setCenterFading(false);
+
+    setLines([]);
+    await sleep(8000);
+
+    await typeLine('PROJECT DELTA · Phase III · FAILED', 'warning', 60);
+    await sleep(1500);
+    await typeLine('PROJECT DELTA · Phase IV · ACTIVE', 'warning', 60);
+    await sleep(1000);
+
+    setShowCongrats(true);
+    await sleep(1000);
+    setShowCongrats(false);
+
+    for (let i = 0; i < 3; i += 1) {
+      if (canceledRef.current) return;
+      setFlashLayer('red');
+      await sleep(140);
+      setFlashLayer('none');
+      await sleep(120);
+    }
+    setFlashLayer('white');
+    await sleep(180);
+    setFlashLayer('none');
+
+    if (canceledRef.current) return;
+    setErasureActive(true);
+    completeEnding('ending_c');
+    setCurrentApp('credits');
+  }, [appendLine, completeEnding, runRestoreNodeStream, setCurrentApp, setErasureActive, typeCenter, typeLine]);
+
+  useEffect(() => {
+    canceledRef.current = false;
+    void runStartup();
+    return () => {
+      canceledRef.current = true;
+    };
+  }, [runStartup]);
+
+  const submit = useCallback((raw: string) => {
+    if (inputMode === 'locked' || busy) return;
+    const value = raw.trim();
+    if (!value) return;
+
+    const upper = value.toUpperCase();
+    setInputValue('');
+    appendLine(`> ${value}`);
+
+    if (inputMode === 'command') {
+      if (upper === 'FORMAT') {
+        setEndingType('A');
+        setInputMode('locked');
+        setBusy(true);
+        void prepareFormat();
+        return;
+      }
+      if (upper === 'REPLACE') {
+        setEndingType('B');
+        setInputMode('locked');
+        setBusy(true);
+        void prepareReplace();
+        return;
+      }
+      if (upper === 'RESTORE') {
+        if (!canRestore) {
+          appendLine('> 权限不足，缺少必要组件', 'warning');
+          return;
+        }
+        setEndingType('C');
+        setInputMode('locked');
+        setBusy(true);
+        void prepareRestore();
+        return;
+      }
+      appendLine('> 未知指令', 'warning');
       return;
     }
 
-    const line = lines[lineIndex];
-    const delay = line === '> ' ? 800 :
-      line.startsWith('████') ? 600 :
-        line.includes('……') ? 1200 :
-          line.startsWith('__') ? 1500 :
-            line.startsWith('节点') ? 250 :
-              300;
-
-    const timer = setTimeout(() => {
-      setDisplayLines(prev => [...prev, lines[lineIndex]]);
-      setLineIndex(prev => prev + 1);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [phase, choice, lineIndex]);
-
-  // 结局完成 → 记录并提供回溯
-  const handleFinish = () => {
-    if (choice) {
-      completeEnding(choice);
-    }
-    setCurrentApp('desktop');
-  };
-
-  // 渲染单行
-  const renderLine = (line: string, i: number) => {
-    // V4 §8.3 血红色文字
-    if (line.startsWith('__BLOOD__')) {
-      const text = line.replace('__BLOOD__', '');
-      return <div key={i} className="text-red-500 font-bold text-lg" style={{ animation: 'fade-in-up 0.3s ease-out' }}>{text}</div>;
-    }
-    // V4 §8.5 "我看到光了"
-    if (line.startsWith('__LIGHT__')) {
-      const text = line.replace('__LIGHT__', '');
-      return <div key={i} className="text-white text-center text-lg font-bold my-4" style={{ animation: 'fade-in-up 0.5s ease-out' }}>{text}</div>;
-    }
-    // V4 §8.5 林晓微信
-    if (line.startsWith('__WECHAT__')) {
-      const text = line.replace('__WECHAT__', '');
-      return (
-        <div key={i} className="my-4 bg-[#1a1a1a] rounded-lg p-4 border border-green-900/30 max-w-xs mx-auto" style={{ animation: 'fade-in-up 0.5s ease-out' }}>
-          <div className="text-xs text-gray-500 mb-2 text-center">微信</div>
-          <div className="bg-green-900/20 rounded-lg p-3">
-            <div className="text-xs text-green-400 mb-1">林晓</div>
-            <div className="text-sm text-green-300">{text.replace('林晓：', '')}</div>
-          </div>
-        </div>
-      );
-    }
-    // V4 §8.5 特殊释放节点
-    if (line.startsWith('__RELEASE__')) {
-      const text = line.replace('__RELEASE__', '');
-      return <div key={i} className="text-amber-300 font-bold" style={{ animation: 'fade-in-up 0.3s ease-out' }}>{text}</div>;
+    if (inputMode === 'formatConfirm') {
+      if (upper !== 'CONFIRM') {
+        appendLine('> 未知指令', 'warning');
+        return;
+      }
+      setInputMode('locked');
+      setBusy(true);
+      void runEndingA();
+      return;
     }
 
-    // 普通行
-    const cn = line.includes('警告') || line.includes('失联') ? 'text-red-400' :
-      line.includes('已释放') || line.includes('✓') ? 'text-green-400' :
-        line.includes('∞') ? 'text-blue-400' :
-          line.startsWith('> [结局') ? 'text-white font-bold mt-4' :
-            line.startsWith('节点') ? 'text-[#00ff00]/60 text-xs' :
-              line.startsWith('[█') || line.startsWith('█') ? 'text-[#00ff00]' :
-                'text-[#00ff00]/80';
+    if (inputMode === 'replaceId') {
+      setInputMode('locked');
+      setBusy(true);
+      void runEndingB(value);
+      return;
+    }
 
-    return (
-      <div key={i} className={cn} style={{ animation: 'fade-in-up 0.3s ease-out' }}>
-        {line || '\u00A0'}
-      </div>
-    );
-  };
+    if (inputMode === 'restoreConfirm') {
+      if (upper !== 'Y') {
+        appendLine('> 未知指令', 'warning');
+        return;
+      }
+      setInputMode('locked');
+      setBusy(true);
+      void runEndingC();
+      return;
+    }
+  }, [appendLine, busy, canRestore, inputMode, prepareFormat, prepareReplace, prepareRestore, runEndingA, runEndingB, runEndingC, setEndingType]);
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
-      {/* ===== V4 §8.2 选择界面 ===== */}
-      {phase === 'choice' && (
-        <div className="max-w-xl w-full px-8 space-y-8">
-          <div className="text-center space-y-3 font-mono text-sm">
-            <div className="text-[#00ff00]">{'\> 系统检测到异常指令序列'}</div>
-            <div className="text-[#00ff00]">{'\> 正在验证权限……'}</div>
-            <div className="text-[#00ff00] mt-4">
-              {`\> 检测到阵法覆写函数残片输入……`}
-            </div>
-
-            {runeCount < 7 ? (
-              <div className="mt-4 space-y-1 text-red-500/80 text-xs animate-pulse">
-                <div>{`\> 警告：签名不完整，太乙救苦反编译阵列无法激活。`}</div>
-                <div>{'  强行执行将导致部分节点未被覆盖，'}</div>
-                <div>{'  系统将触发自修复程序。'}</div>
-              </div>
-            ) : (
-              <div className="mt-4 space-y-1 text-green-400 text-xs drop-shadow-[0_0_8px_rgba(0,255,0,0.8)]">
-                <div>{'\> 验证指令完整性：[完美匹配] ✓'}</div>
-                <div>{'  太岁高维接口：已暴露'}</div>
-                <div>{'  太乙救苦反编译阵列：就绪'}</div>
-              </div>
-            )}
-
-            <div className="text-[#00ff00]/60 mt-6 text-xs">{'\> 可用选项：'}</div>
-          </div>
-
-          <div className="space-y-3">
-            <EndingButton
-              label="烈火洗城（格式化）"
-              tag="A"
-              completed={completedEndings.includes('A')}
-              onClick={() => handleChoice('A')}
-            />
-            <EndingButton
-              label="上行替代（伥鬼）"
-              tag="B"
-              completed={completedEndings.includes('B')}
-              onClick={() => handleChoice('B')}
-            />
-
-            {canChooseC ? (
-              <EndingButton
-                label="七星破阵（太乙救苦）"
-                tag="C"
-                completed={completedEndings.includes('C')}
-                onClick={() => handleChoice('C')}
-              />
-            ) : (
-              <div className="w-full p-4 border border-red-900/30 bg-red-950/20 rounded-lg text-left font-mono text-sm text-red-500/50">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">[C]</span>
-                  <span>[加密指令段]</span>
-                </div>
-                <p className="text-xs mt-1">
-                  {`\> ERR_SIGNATURE_INVALID：需要更多系统底层权限碎片以解密该选项。`}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 移除已体验结局提示 */}
-          {/* 返回调查按钮 (V4 §10.2 岔路三) */}
-          <div className="text-center">
-            <button
-              className="text-xs text-gray-600 hover:text-gray-400 font-mono transition-colors"
-              onClick={() => setCurrentApp('desktop')}
-            >
-              {'< 返回调查'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ===== V4 执行/显示 ===== */}
-      {(phase === 'executing' || phase === 'display') && (
-        <div className="max-w-2xl w-full px-8 max-h-[80vh] overflow-y-auto">
-          <div className="font-mono text-sm space-y-1">
-            {displayLines.map((line, i) => renderLine(line, i))}
-          </div>
-
-          {endingComplete && (
-            <div className="mt-8 text-center">
-              <button
-                className="px-6 py-2 border border-white/20 text-white/60 rounded text-sm hover:bg-white/10 hover:text-white transition-colors font-mono"
-                onClick={handleFinish}
-              >
-                {'>>> 返回桌面'}
-              </button>
-
-              {/* 移除缺失分支提示 */}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* GDD §8.5 赵启定时邮件 — 结局C选择前弹出 */}
-      {showZhaoQiEmail && (
-        <div className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center">
-          <div className="max-w-lg bg-zinc-900 border border-zinc-700 rounded-lg p-6 animate-in fade-in duration-1000">
-            <div className="text-xs text-zinc-500 font-mono mb-1">
-              发件人：zq_mnt_8023@protonmail.com
-            </div>
-            <div className="text-xs text-zinc-500 font-mono mb-1">
-              主题：这封邮件如果你看到了，说明程序触发了
-            </div>
-            <div className="text-xs text-zinc-500 font-mono mb-4">
-              发件时间：2024-03-19 22:34（系统接收时间：今天）
-            </div>
-            <div className="text-zinc-300 text-sm leading-relaxed space-y-3 font-serif">
-              <p>我不知道你是谁。</p>
-              <p>我在林晓的档案里找到了这个联系方式。</p>
-              <p>如果你看到了这封邮件，</p>
-              <p>说明你找到了那七个碎片，</p>
-              <p>说明程序正在等待最后的确认。</p>
-              <p className="mt-4">我不是英雄。</p>
-              <p>我只是觉得，如果我什么都不做，</p>
-              <p>以后我会一直记得那个气味。</p>
-              <p className="mt-4 text-amber-500/80">把它跑完。</p>
-              <p className="mt-4 text-zinc-500 text-right">赵启<br />2024-03-19</p>
-            </div>
-            <button
-              onClick={() => {
-                setShowZhaoQiEmail(false);
-                executeChoice('C');
-              }}
-              className="mt-6 w-full py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-black transition-colors font-mono text-sm"
-            >
-              {'[继续执行七星破阵]'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── V4 结局选择按钮 ──
-function EndingButton({ label, tag, completed, onClick }: {
-  label: string; tag: string;
-  completed?: boolean; onClick: () => void;
-}) {
-  return (
-    <button
-      className={`w-full p-4 border rounded-lg text-left transition-all font-mono text-sm
-        ${completed
-          ? 'border-gray-700/50 text-gray-500 hover:border-gray-600'
-          : 'border-[#00ff00]/30 text-[#00ff00]/80 hover:border-[#00ff00]/60 hover:bg-[#00ff00]/5'
-        }`}
-      onClick={onClick}
+    <div
+      className="fixed inset-0 bg-black text-green-300 font-mono flex flex-col"
+      onClick={() => {
+        if (inputMode !== 'locked') {
+          hiddenInputRef.current?.focus();
+        }
+      }}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-xs text-green-700 mr-2">[{tag}]</span>
-          <span className={`font-bold ${completed ? 'text-green-900 line-through' : ''}`}>{label}</span>
-        </div>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-1">
+        {lines.map((line) => {
+          const toneClass = line.tone === 'warning'
+            ? 'text-red-400'
+            : line.tone === 'muted'
+              ? 'text-zinc-500'
+              : 'text-green-300';
+          return (
+            <p
+              key={line.id}
+              className={`whitespace-pre-wrap break-words leading-6 ${toneClass} transition-opacity duration-[1200ms] ${line.faded ? 'opacity-0' : 'opacity-100'}`}
+            >
+              {line.text || ' '}
+            </p>
+          );
+        })}
       </div>
-    </button>
+
+      {centerVisible && (
+        <div
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center text-white font-serif text-4xl transition-opacity duration-[2000ms] ${centerFading ? 'opacity-0' : 'opacity-100'}`}
+        >
+          {centerText}
+        </div>
+      )}
+
+      {footerTiny && (
+        <div className="pointer-events-none absolute bottom-14 left-0 right-0 text-center text-[10px] text-zinc-600">
+          {footerTiny}
+        </div>
+      )}
+
+      {showCongrats && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-zinc-100 text-xs">
+          恭喜！
+        </div>
+      )}
+
+      {flashLayer !== 'none' && (
+        <div className={`pointer-events-none absolute inset-0 ${flashLayer === 'red' ? 'bg-red-700' : 'bg-white'}`} />
+      )}
+
+      <div className="border-t border-zinc-800 px-6 py-3 bg-black/95">
+        <div className="flex items-center gap-2 text-green-300">
+          <span>&gt;</span>
+          <span className="whitespace-pre-wrap break-all">{inputMode === 'locked' ? '' : inputValue}</span>
+          <span className={`${cursorBlinking ? 'animate-pulse' : ''}`}>▋</span>
+        </div>
+        <input
+          ref={hiddenInputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              submit(inputValue);
+            }
+          }}
+          disabled={inputMode === 'locked'}
+          className="absolute opacity-0 pointer-events-none"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+      </div>
+    </div>
   );
 }

@@ -18,6 +18,12 @@ interface InvestigateNodeProps {
     className?: string;
 }
 
+function formatRuneTitle(runeId: string): string {
+    const match = runeId.match(/(\d+)$/);
+    if (!match) return runeId;
+    return `RUNE #${match[1].padStart(2, '0')}`;
+}
+
 export function InvestigateNode({
     hookId,
     condition = true,
@@ -29,13 +35,17 @@ export function InvestigateNode({
     const { readHook, hasReadHook, collectRune, hasRune } = useGame();
     const [runeStory, setRuneStory] = useState<string | null>(null);
     const alreadyRead = hasReadHook(hookId);
+    const needsRune = !!runeId && !hasRune(runeId);
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         if (!condition) return;
-        if (alreadyRead) return;
+        // 允许“hook 已读但碎片未收集”时补触发 rune
+        if (alreadyRead && !needsRune) return;
 
-        readHook(hookId);
+        if (!alreadyRead) {
+            readHook(hookId);
+        }
 
         // 碎片收集 → 展示赵启叙事片段
         if (runeId && !hasRune(runeId)) {
@@ -48,12 +58,12 @@ export function InvestigateNode({
         }
 
         onReadComplete?.();
-    }, [condition, alreadyRead, hookId, runeId, readHook, collectRune, hasRune, onReadComplete]);
+    }, [condition, alreadyRead, needsRune, hookId, runeId, readHook, collectRune, hasRune, onReadComplete]);
 
     return (
         <>
             <span
-                className={`investigate-node relative cursor-pointer ${className} ${condition && !alreadyRead ? 'investigate-highlight' : ''
+                className={`investigate-node relative cursor-pointer ${className} ${condition && (!alreadyRead || needsRune) ? 'investigate-highlight' : ''
                     }`}
                 onClick={handleClick}
             >
@@ -70,7 +80,7 @@ export function InvestigateNode({
                         {/* 碎片标识 */}
                         <div className="text-center">
                             <span className="text-amber-500/60 text-xs font-mono tracking-[0.5em]">
-                                ☰ RUNE FRAGMENT
+                                {runeId ? formatRuneTitle(runeId) : 'RUNE FRAGMENT'}
                             </span>
                         </div>
 

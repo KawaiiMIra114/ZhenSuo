@@ -121,3 +121,53 @@ body {
 .animate-text-flicker {
   animation: text-flicker 4s ease-in-out infinite;
 }
+
+/* Shared hint style for clickable investigation nodes */
+.investigate-highlight {
+  border-bottom: 1px dashed rgba(100, 116, 139, 0.45);
+  border-bottom: 1px dashed color-mix(in srgb, currentColor 38%, transparent);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.investigate-highlight:hover {
+  border-bottom-color: rgba(51, 65, 85, 0.75);
+  border-bottom-color: color-mix(in srgb, currentColor 78%, transparent);
+}
+
+/* Gentle-mode friendly fade animation */
+@keyframes soft-fade-cycle {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.animate-soft-fade {
+  animation: soft-fade-cycle 2.2s ease-in-out both;
+}
+
+@keyframes ghost-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.12; }
+}
+
+@keyframes ending-delta-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-ending-delta-fade {
+  animation: ending-delta-fade 1.2s ease forwards;
+}
+
+@keyframes shutdown-tear {
+  0% { transform: skewX(0deg) translate(0, 0); filter: contrast(1); }
+  20% { transform: skewX(-6deg) translate(-8px, 2px); filter: contrast(1.1); }
+  40% { transform: skewX(5deg) translate(10px, -1px); filter: contrast(0.9); }
+  60% { transform: skewX(-4deg) translate(-6px, 3px); filter: contrast(1.15); }
+  80% { transform: skewX(3deg) translate(5px, -2px); filter: contrast(0.85); }
+  100% { transform: skewX(0deg) translate(0, 0); filter: contrast(1); }
+}
+
+.shutdown-screen-tear {
+  animation: shutdown-tear 80ms steps(2, end) infinite;
+}

@@ -1,4 +1,6 @@
-export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending' | 'shutdown';
+import type { Dispatch, SetStateAction } from 'react';
+
+export type AppState = 'warning' | 'prologue' | 'desktop' | 'clinic' | 'forum' | 'oa' | 'terminal' | 'ending' | 'shutdown' | 'credits';
 export type EndingType = 'A' | 'B' | 'C' | null;
 
 // 游戏进度四阶段制（V3 §二）
@@ -37,6 +39,9 @@ export interface GameState {
   completedEndings: string[];  // 已完成的结局 ID
   forumAccess: ForumAccess;    // V4 论坛访问层级
   discoveredFacts: string[];   // V4 防穿越前置条件标记
+  playTimeSeconds: number;     // 游玩时长（秒）
+  erasureActive: boolean;      // 结局A/C后痕迹抹除状态
+  openWindows: string[];       // 桌面窗口打开状态（用于关机后恢复）
 }
 
 // Context 暴露的完整接口
@@ -44,6 +49,8 @@ export interface GameContextType {
   // 导航
   currentApp: AppState;
   setCurrentApp: (app: AppState) => void;
+  openWindows: string[];
+  setOpenWindows: Dispatch<SetStateAction<string[]>>;
   gentleMode: boolean;
   setGentleMode: (mode: boolean) => void;
   clues: Clue[];
@@ -79,6 +86,9 @@ export interface GameContextType {
   resetGame: () => void;
   completedEndings: string[];
   completeEnding: (endingId: string) => void;
+  playTimeSeconds: number;
+  erasureActive: boolean;
+  setErasureActive: (v: boolean) => void;
 
   // V4 论坛层级系统
   forumAccess: ForumAccess;

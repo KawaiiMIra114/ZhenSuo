@@ -3,22 +3,28 @@ import { GameProvider, useGame } from './GameContext';
 import { Warning } from './pages/Warning';
 import { Prologue } from './pages/Prologue';
 import { Desktop } from './pages/Desktop';
-import { Clinic } from './pages/Clinic';
-import { Forum } from './pages/Forum';
-import { OA } from './pages/OA';
 import { Ending } from './pages/Ending';
-import { Notebook } from './components/Notebook';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { Browser } from './components/Browser';
 import { ShutdownSequence } from './components/ShutdownSequence';
+import { Credits } from './pages/Credits';
 
 function GameRouter() {
-  const { currentApp } = useGame();
+  const { currentApp, setCurrentApp } = useGame();
 
   if (currentApp === 'warning') return <Warning />;
   if (currentApp === 'prologue') return <Prologue />;
   if (currentApp === 'ending') return <Ending />;
-  if (currentApp === 'shutdown') return <ShutdownSequence />;
+  if (currentApp === 'shutdown') {
+    return <ShutdownSequence onCreditsRequested={() => setCurrentApp('credits')} />;
+  }
+  if (currentApp === 'credits') {
+    return (
+      <Credits
+        onBack={() => setCurrentApp('credits')}
+        onReplay={() => setCurrentApp('credits')}
+      />
+    );
+  }
   // 对旧版本的 oa / forum / clinic 或未知状态，合并渲染到 Desktop
   return (
     <>

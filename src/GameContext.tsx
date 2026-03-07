@@ -14,6 +14,7 @@ const STORAGE_KEY = 'zhensuo_save_v3';
 // 持久化存档
 export interface SaveData {
   currentApp: AppState;
+  openWindows: string[];
   gentleMode: boolean;
   clues: Clue[];
   endingType: EndingType;
@@ -25,6 +26,8 @@ export interface SaveData {
   forumAccess: ForumAccess;       // V4
   discoveredFacts: string[];      // V4
   signalBoost: number;            // V4 额外信号增量
+  playTimeSeconds: number;        // V5 游玩时长
+  erasureActive: boolean;         // V5 痕迹抹除状态
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -49,6 +52,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // 导航
   const [currentApp, setCurrentAppState] = useState<AppState>(saved?.currentApp ?? 'warning');
+  const [openWindows, setOpenWindowsState] = useState<string[]>(saved?.openWindows ?? ['wechat', 'email', 'photos']);
   const [gentleMode, setGentleMode] = useState(saved?.gentleMode ?? false);
 
   // 线索系统
@@ -73,16 +77,29 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // V4 林晓信号额外增量
   const [signalBoost, setSignalBoost] = useState(saved?.signalBoost ?? 0);
+  const [playTimeSeconds, setPlayTimeSeconds] = useState(saved?.playTimeSeconds ?? 0);
+  const [erasureActive, setErasureActiveState] = useState(saved?.erasureActive ?? false);
 
   // 包装 setCurrentApp
   const setCurrentApp = useCallback((app: AppState) => {
     setCurrentAppState(app);
+  }, []);
+  const setErasureActive = useCallback((v: boolean) => {
+    setErasureActiveState(v);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPlayTimeSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   // 自动存档
   useEffect(() => {
     writeSave({
       currentApp,
+      openWindows,
       gentleMode,
       clues,
       endingType,
@@ -94,11 +111,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       forumAccess,
       discoveredFacts,
       signalBoost,
+      playTimeSeconds,
+      erasureActive,
     });
   }, [
-    currentApp, gentleMode, clues, endingType,
+    currentApp, openWindows, gentleMode, clues, endingType,
     readHooks, currentPhase, collectedRunes, isOALoggedIn, completedEndings,
-    forumAccess, discoveredFacts, signalBoost,
+    forumAccess, discoveredFacts, signalBoost, playTimeSeconds, erasureActive,
     writeSave
   ]);
 
@@ -139,10 +158,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const hasRune = useCallback((runeId: RuneId) => collectedRunes.includes(runeId), [collectedRunes]);
 
-  // 林晓信号强度 = 碎片数 + 额外增量（关机惩罚等）
-  const linXiaoSignalStrength = collectedRunes.length + signalBoost;
+  // 林晓信号强度上限为 7（避免继续叠加导致表现失控）
+  const linXiaoSignalStrength = Math.min(collectedRunes.length + signalBoost, 7);
   const boostSignal = useCallback(() => {
-    setSignalBoost(prev => prev + 1);
+    setSignalBoost(prev => Math.min(prev + 1, 7));
   }, []);
 
   // OA 系统 — V4 防穿越
@@ -178,7 +197,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // 重置游戏
   const resetGame = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    // 兼容历史版本存档键，避免“重置后仍读到旧进度”
+    Object.keys(localStorage).forEach((k) => {
+      if (k.startsWith('zhensuo_save_')) {
+        localStorage.removeItem(k);
+      }
+    });
     setCurrentAppState('warning');
+    setOpenWindowsState(['wechat', 'email', 'photos']);
     setGentleMode(false);
     setClues([]);
     setHasUnread(false);
@@ -191,12 +217,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setForumAccessState('public');
     setDiscoveredFacts([]);
     setSignalBoost(0);
+    setPlayTimeSeconds(0);
+    setErasureActiveState(false);
   }, []);
 
   return (
     <GameContext.Provider value={{
       // 导航
       currentApp, setCurrentApp,
+      openWindows, setOpenWindows: setOpenWindowsState,
       gentleMode, setGentleMode,
 
       // 线索
@@ -218,6 +247,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       // 结局
       endingType, setEndingType,
       completedEndings, completeEnding,
+      playTimeSeconds,
+      erasureActive, setErasureActive,
 
       // V4 论坛层级
       forumAccess, setForumAccess,

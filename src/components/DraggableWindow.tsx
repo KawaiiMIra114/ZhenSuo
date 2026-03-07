@@ -23,6 +23,8 @@ interface DraggableWindowProps {
     /** z-index 层级 */
     zIndex?: number;
     onFocus?: () => void;
+    /** 外部请求置顶的递增信号 */
+    focusTick?: number;
 }
 
 // 全局层级计数
@@ -39,6 +41,7 @@ export function DraggableWindow({
     className = '',
     zIndex: initialZ,
     onFocus,
+    focusTick = 0,
     isMinimized: externalIsMinimized,
     onMinimizeToggle,
 }: DraggableWindowProps) {
@@ -48,7 +51,13 @@ export function DraggableWindow({
             y: Math.max(40, Math.random() * 100),
         }
     );
-    const [zIndex, setZIndex] = useState(initialZ ?? ++globalZCounter);
+    const [zIndex, setZIndex] = useState(() => {
+        if (initialZ !== undefined) {
+            globalZCounter = Math.max(globalZCounter, initialZ);
+            return initialZ;
+        }
+        return ++globalZCounter;
+    });
     const [internalIsMinimized, setInternalIsMinimized] = useState(false);
 
     // 如果外部传入了 isMinimized，则优先使用外部的；否则使用内部的
@@ -63,9 +72,19 @@ export function DraggableWindow({
     const windowRef = useRef<HTMLDivElement>(null);
 
     const bringToFront = useCallback(() => {
-        setZIndex(++globalZCounter);
+        setZIndex(prev => {
+            const next = Math.max(globalZCounter + 1, prev + 1);
+            globalZCounter = next;
+            return next;
+        });
         onFocus?.();
     }, [onFocus]);
+
+    useEffect(() => {
+        if (!isMinimized) {
+            bringToFront();
+        }
+    }, [isMinimized, focusTick, bringToFront]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         // 只有标题栏区域可拖动

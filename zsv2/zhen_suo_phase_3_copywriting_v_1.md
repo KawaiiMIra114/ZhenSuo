@@ -99,7 +99,7 @@
 
 > **[安宁深眠内部工程词典 - 释义投影]**
 > 
-> **词条：DNR (Deep Neural Relocation / 深度神经重定向)**
+> **词条：DNR (Digital Necromancy Routine / 数字招魂程序)**
 > *注：对外文案统一包装为“Deep Non-REM (深度无梦睡眠)”，切勿混淆。*
 > 
 > **核心定义**：
